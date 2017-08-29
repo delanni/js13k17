@@ -1,0 +1,16 @@
+{
+  "name": "js13k17",
+  "version": "1.0.0",
+  "description": "Lost - in transit",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "delanni.alex@gmail.com",
+  "license": "ISC",
+  "dependencies": {
+    "ts-loader": "^2.3.4",
+    "typescript": "^2.4.0",
+    "webpack": "^3.5.5"
+  }
+}
