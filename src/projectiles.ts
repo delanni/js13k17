@@ -2,7 +2,7 @@ import Entity, { EntityKind } from './entity';
 import Vector2d from './vector';
 import PhysicsBody from './physicsbody';
 import { Color, NumberRange } from './utils';
-import { Explosion } from './explosion';
+import { Explosion, ExplosionParameters } from './explosion';
 import World, { CollisionType, ZIndex } from './world';
 import { FireEmitter, Emitter, WaterEmitter, PoisonEmitter, LightningEmitter } from "./emitters";
 import { Particle } from './particle';
@@ -55,14 +55,17 @@ export class Fireball extends Projectile {
 		if (other.kind < 10) {
 			// aa.play("hit");
 			this.markForRemoval();
-			const exp = new Explosion({
+			const explosionParameters: ExplosionParameters = {
 				gravityFactor: new NumberRange(.7),
 				colors: [new Color("#ffcccc")],
 				offset: this.body.speed.multiply(.5),
 				zIndex: ZIndex.FOREGROUND,
 				collisionType: CollisionType.COLLIDE_GROUND,
-				shrink: .6
-			});
+				shrink: .6,
+				size: new NumberRange(1,5),
+				life: new NumberRange(0,1000)
+			};
+			const exp = new Explosion(explosionParameters);
 			exp.fire(this.body.center, this.world);
 		}
 	}
@@ -85,14 +88,17 @@ export class Waterbolt extends Projectile {
 		if (other.kind < 10) {
 			// aa.play("hit");
 			this.markForRemoval();
-			const exp = new Explosion({
+			const explosionParameters: ExplosionParameters = {
 				gravityFactor: new NumberRange(.8),
 				colors: [new Color("#9209da")],
 				offset: this.body.speed.multiply(.25),
 				zIndex: ZIndex.FOREGROUND,
 				collisionType: CollisionType.COLLIDE_GROUND,
-				shrink: .8
-			});
+				shrink: .8,
+				size: new NumberRange(1,2),
+				life: new NumberRange(100, 1000)
+			};
+			const exp = new Explosion(explosionParameters);
 			exp.fire(this.body.center, this.world);
 		}
 	};
@@ -123,7 +129,7 @@ export class Poisonball extends Projectile {
 		if (other.kind < 10) {
 			// aa.play("hit");
 			this.markForRemoval();
-			const exp = new Explosion({
+			const explosionParameters: ExplosionParameters = {
 				gravityFactor: new NumberRange(-.3),
 				colors: [new Color("#ca0920")],
 				zIndex: ZIndex.FOREGROUND,
@@ -133,8 +139,10 @@ export class Poisonball extends Projectile {
 				// particleType: Bubble,
 				life: new NumberRange(150, 500),
 				strength: 0.3,
-				count: new NumberRange(4, 10)
-			});
+				count: new NumberRange(4, 10),
+				size: new NumberRange(1,4)
+			};
+			const exp = new Explosion(explosionParameters);
 			exp.fire(this.body.center, this.world);
 		}
 	}

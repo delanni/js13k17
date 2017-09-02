@@ -1,6 +1,7 @@
 import World from "./world";
 import Vector2d from './vector';
 import { Emitter } from "./emitters";
+import PhysicsBody from "./physicsbody";
 
 export default abstract class Entity {
 	maxLife: number;
@@ -53,7 +54,7 @@ export default abstract class Entity {
 		}
 	}
 
-	body: any;
+	body: PhysicsBody;
 
 	onAnimate(world: World, time: number) {
 

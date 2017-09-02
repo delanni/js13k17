@@ -3,13 +3,13 @@ import { clamp } from "./utils";
 
 export default class PhysicsBody {
 	private angularSpeed: number;
-	private rotation: number;
-	private friction: number;
+	public rotation: number;
+	public friction: number;
 
-	constructor(public center: Vector2d = new Vector2d(),
-	            public corner: Vector2d = new Vector2d(),
-	            public speed: Vector2d = new Vector2d(),
-	            public acceleration: Vector2d = new Vector2d()) {
+	constructor(public readonly center: Vector2d = new Vector2d(),
+		public readonly corner: Vector2d = new Vector2d(),
+		public readonly speed: Vector2d = new Vector2d(),
+		public readonly acceleration: Vector2d = new Vector2d()) {
 		this.rotation = 0;
 		this.angularSpeed = 0;
 		this.friction = 0.006;
@@ -19,25 +19,24 @@ export default class PhysicsBody {
 	static XLIMIT = 0.5;
 	static YLIMIT = 0.5;
 
-	tick(ms: number) {
+	tick(ms: number): void {
 		this.move(this.speed.multiply(ms));
 		this.rotate(this.angularSpeed * ms);
 		this.speed.doAdd(this.acceleration.multiply(ms));
 		this.speed.doMultiply(1 - this.friction * ms);
 		this.limitSpeed();
-	};
+	}
 
 	move(vector: Vector2d) {
 		this.center.doAdd(vector);
-		return this;
-	};
+	}
 
-	applyAcceleration(vector: Vector2d, time: number) {
+	applyAcceleration(vector: Vector2d, time: number): void {
 		this.speed.doAdd(vector.multiply(time));
 		this.limitSpeed();
-	};
+	}
 
-	limitSpeed = function () {
+	limitSpeed(): void {
 		let mag = this.speed.getMagnitude();
 		if (mag != 0) {
 			if (mag < PhysicsBody.EPSILON) {
@@ -52,31 +51,39 @@ export default class PhysicsBody {
 			}
 		}
 		if (Math.abs(this.angularSpeed) < PhysicsBody.EPSILON) this.angularSpeed = 0;
-	};
+	}
 
-	intersects(other: PhysicsBody) {
+	intersects(other: PhysicsBody): boolean {
 		if (Math.abs(this.center[0] - other.center[0]) > (this.corner[0] + other.corner[0])) {
 			return false;
 		} else if (Math.abs(this.center[1] - other.center[1]) > (this.corner[1] + other.corner[1])) {
 			return false;
 		}
 		return true;
-	};
+	}
 
+	/**
+	 * Get [Left, Top, Width, Height] array
+	 * @return An array containing coordinates for [left, top, width, height]
+	 */
 	getLTWH(): number[] {
 		return [
 			this.center[0] - this.corner[0],
 			this.center[1] - this.corner[1],
 			this.corner[0] * 2,
 			this.corner[1] * 2];
-	};
+	}
 
-	rotate = function (angle: number) {
+	rotate(angle: number): void {
 		this.rotation += angle;
-	};
+	}
 
-	gravitateTo(location: Vector2d, time: number) {
-		time = Math.max(time, 16);
-		this.speed = (location.subtract(this.center).multiply(time / 2000));
-	};
+	gravitateTo(location: Vector2d, time: number, gravityStrength: number = 0.5): void {
+		const time_ = Math.max(time, 16);
+		if (gravityStrength <= 3) {
+			this.speed.set(location.subtract(this.center).multiply(time_ / 1000 * gravityStrength));
+		} else {
+			this.center.set(location);
+		}
+	}
 }

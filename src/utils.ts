@@ -44,10 +44,7 @@ export type Constructable<T> = {
 }
 
 export class NumberRange {
-	constructor(public min: number, public max?: number) {
-		if (typeof max === 'undefined') {
-			this.max = this.min;
-		}
+	constructor(public min: number, public max: number = min) {
 	}
 
 	getRandom(): number {

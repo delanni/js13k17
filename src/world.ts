@@ -7,54 +7,43 @@ type EntityGroupName =
 	| "collideGroundEntities"
 	| "backgroundEntities"
 	| "entities"
+	| "centerEntities"
 	| "foregroundEntities";
 
 export default class World {
 
-	collidellEntities: Entity[];
-	nonCollidingEntities: Entity[];
-	backgroundEntities: Entity[];
-	containers: string[];
-	private centerEntities: Entity[];
-	private foregroundEntities: Entity[];
-	private collideGroundEntities: Entity[];
-	private collideAllEntities: Entity[];
+	private entityGroups: { [key: string]: Entity[] } = {
+		allEntities: [],
+		collidellEntities: [],
+		nonCollidingEntities: [],
+		backgroundEntities: [],
+		centerEntities: [],
+		foregroundEntities: [],
+		collideGroundEntities: [],
+		collideAllEntities: []
+	}
+
 	private gravity: Vector2d;
 
 	pool: { [kind: number]: Entity[] };
 
 	private static instance: World;
 	private roundCount: number = 0;
-	private allEntities: Entity[];
 
 	constructor() {
-		this.containers = ["nonCollidingEntities", "collideAllEntities", "collideGroundEntities", "backgroundEntities", "centerEntities", "foregroundEntities"];
-
-		this.allEntities = [];
-
-		this.centerEntities = [];
-		this.backgroundEntities = [];
-		this.foregroundEntities = [];
-
-		this.nonCollidingEntities = [];
-		this.collideGroundEntities = [];
-		this.collideAllEntities = [];
-
 		this.gravity = new Vector2d(0, 1e-3);
 
 		this.pool = {};
-		this.pool[EntityKind.PARTICLE] = [];
-		this.pool[EntityKind.BUBBLE] = [];
-		this.pool[EntityKind.COLLECTIBLE] = [];
+		// this.pool[EntityKind.PARTICLE] = [];
+		// this.pool[EntityKind.BUBBLE] = [];
+		// this.pool[EntityKind.COLLECTIBLE] = [];
 		World.instance = this;
 	}
 
 	render(ctx: CanvasRenderingContext2D, time: number) {
-		this.containers.slice(3).forEach((egName) => {
-			let entityGroup = (<any>this)[egName];
-			for (let i = 0; i < entityGroup.length; i++) {
-				if (entityGroup[i] && entityGroup[i].isVisible)
-					entityGroup[i].draw(ctx, this, time);
+		this.entityGroups.allEntities.forEach((entity) => {
+			if (entity.isVisible) {
+				entity.draw(ctx, this, time);
 			}
 		});
 	};
@@ -64,7 +53,7 @@ export default class World {
 
 		this.resolveCollisions(time);
 
-		this.allEntities.forEach(entity => {
+		this.entityGroups.allEntities.forEach(entity => {
 			if (entity.isAlive) {
 				entity.animate(this, time);
 			}
@@ -125,35 +114,35 @@ export default class World {
 	};
 
 	addEntity(e: Entity, collisionType: CollisionType = CollisionType.NO_COLLISION, zIndex: ZIndex = ZIndex.CENTER) {
-		this.allEntities.push(e);
+		this.entityGroups.allEntities.push(e);
 
 		switch (collisionType) {
 			case CollisionType.NO_COLLISION:
-				this.nonCollidingEntities.push(e);
+				this.entityGroups.nonCollidingEntities.push(e);
 				break;
 			case CollisionType.COLLIDE_GROUND:
-				this.collideGroundEntities.push(e);
+				this.entityGroups.collideGroundEntities.push(e);
 				break;
 			case CollisionType.COLLIDE_ALL:
-				this.collideAllEntities.push(e);
+				this.entityGroups.collideAllEntities.push(e);
 				break;
 			default:
-				this.nonCollidingEntities.push(e);
+				this.entityGroups.nonCollidingEntities.push(e);
 				break;
 		}
 
 		switch (zIndex) {
 			case ZIndex.BACKGROUND:
-				this.backgroundEntities.push(e);
+				this.entityGroups.backgroundEntities.push(e);
 				break;
 			case ZIndex.CENTER:
-				this.centerEntities.push(e);
+				this.entityGroups.centerEntities.push(e);
 				break;
 			case ZIndex.FOREGROUND:
-				this.foregroundEntities.push(e);
+				this.entityGroups.foregroundEntities.push(e);
 				break;
 			default:
-				this.centerEntities.push(e);
+				this.entityGroups.centerEntities.push(e);
 				break;
 		}
 	}

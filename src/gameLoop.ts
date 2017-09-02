@@ -86,9 +86,14 @@ export default class GameLoop {
 
 	constructor(canvas: HTMLCanvasElement) {
 		this.canvas = canvas;
-		this.ctx = canvas.getContext("2d");
-		this.ctx.webkitImageSmoothingEnabled = false;
-		this.ctx.imageSmoothingEnabled = false;
+		const ctx = canvas.getContext("2d");
+		if (ctx === null) {
+			throw new Error("Failed to retrieve canvas context.");
+		} else {
+			this.ctx = ctx;
+			this.ctx.webkitImageSmoothingEnabled = false;
+			this.ctx.imageSmoothingEnabled = false;
+		}
 	}
 
 	// Mouse.init(canvas);

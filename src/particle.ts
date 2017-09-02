@@ -7,9 +7,9 @@ type Color = any;
 
 export class Particle extends Entity {
 	shrinkage: number;
-	private color: Color;
+	color: Color;
 	gravityFactor: number;
-	private restitution: number;
+	restitution: number;
 
 	constructor(world: World, center: Vector2d, size: number, color: Color, life: number, shrink: number) {
 		super(EntityKind.PARTICLE, world);
@@ -19,7 +19,7 @@ export class Particle extends Entity {
 		this.gravityFactor = 1;
 		this.restitution = .3;
 		this.shrinkage = (shrink ? (size / 2) / this.life : 0) * shrink;
-	}
+	} 
 
 	draw(ctx: CanvasRenderingContext2D, world: World, time: number) {
 		let ltwh = this.body.getLTWH(), l = ltwh[0], t = ltwh[1], w = ltwh[2], h = ltwh[3];
@@ -28,11 +28,13 @@ export class Particle extends Entity {
 		ctx.rotate(this.body.rotation);
 		ctx.fillStyle = this.color;
 		ctx.fillRect(-w / 2, -h / 2, w, h);
+
+		ctx.fillRect(-w / 2, -h / 2 -20, w/2, h/2);
 		ctx.restore();
 	}
 
 	onAnimate(world: World, time: number) {
-		this.body.corner.doSubtract([this.shrinkage * time, this.shrinkage * time]);
+		this.body.corner.doSubtract(new Vector2d(this.shrinkage * time, this.shrinkage * time));
 	}
 
 	applyGravity(gravityVector: Vector2d, time: number) {

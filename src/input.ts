@@ -53,6 +53,18 @@ export class Keyboard {
 		let key = event.keyCode;
 		this.keys[key] = false;
 	}
+
+	static KEY = {
+		W: "W".charCodeAt(0),
+		S: "S".charCodeAt(0),
+		A: "A".charCodeAt(0),
+		D: "D".charCodeAt(0),
+		I: "I".charCodeAt(0),
+		K: "K".charCodeAt(0),
+		J: "J".charCodeAt(0),
+		L: "L".charCodeAt(0),
+		SPACE: " ".charCodeAt(0)
+	}
 }
 
 export class Mouse {
@@ -89,8 +101,8 @@ export class Mouse {
 	}
 
 	move(event: MouseEvent) {
-		this.x = event.x / this._scaleX;
-		this.y = event.y / this._scaleY;
+		this.x = event.offsetX / this._scaleX;
+		this.y = event.offsetY / this._scaleY;
 
 		this.moveListeners.forEach(f => f(event, this.x, this.y));
 	}
@@ -129,8 +141,10 @@ export class Mouse {
 	}
 
 	getKeys(): number[] {
-		return Object.keys(this.keys).reduce((a, next: string) => {
-			if (this.keys[+next]) a.push(+next);
+		return Object.keys(this.keys).reduce((a: number[], next: string) => {
+			if (this.keys[+next]) {
+				a.push(+next);
+			}
 			return a;
 		}, []);
 	}

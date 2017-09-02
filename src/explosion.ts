@@ -6,27 +6,30 @@ import Entity from './entity';
 
 export interface ExplosionParameters {
 	count?: NumberRange;
-	size?: NumberRange;
+	size: NumberRange;
 	strength?: number;
 	offset?: Vector2d;
-	colors?: Color[];
+	colors: Color[];
 	center?: Vector2d;
-	life?: NumberRange;
+	life: NumberRange;
 	collisionType?: CollisionType;
 	zIndex?: ZIndex;
-	gravityFactor?: NumberRange;
+	gravityFactor: NumberRange;
 	shrink?: number;
 	particleType?: Constructable<Entity>
 }
 
 export class Explosion {
 	count: number;
-	zIndex: ZIndex;
+	// zIndex: ZIndex;
 	params: ExplosionParameters;
-	private collisionType: CollisionType;
+	// private collisionType: CollisionType;
 
-	constructor(params: ExplosionParameters, timeFactor?: number) {
-		let tf = (timeFactor / 16.666) || 1;
+	constructor(params: ExplosionParameters, timeFactor: number = NaN) {
+		let tf = (timeFactor / 16.666);
+		if (isNaN(tf)) {
+			tf = 1;
+		}
 
 		this.params = {
 			...params, ...{
@@ -44,16 +47,17 @@ export class Explosion {
 				particleType: Particle
 			}
 		};
-
-		this.zIndex = params.zIndex;
-		this.collisionType = params.collisionType;
-		this.count = Math.ceil(NumberRange.getRandom(params.count) * tf);
 	}
 
-	fire(xy: Vector2d, world: World) {
+	fire(xy: Vector2d, world: World): Entity[] {
 		// let params = this.params;
 		// let kind = pm.particleType.kind;
 		let particles: Entity[] = [];
+		let particleTypeConstructor: Constructable<Entity> | undefined = this.params.particleType;
+		if (!particleTypeConstructor) {
+			return particles;
+		}
+
 		for (let i = 0; i < this.count; i++) {
 			// if (kind >= 90 && world.pool[kind].length) {
 			// 	let part = world.pool[kind].pop();
@@ -64,7 +68,7 @@ export class Explosion {
 			// 		randBetween(pm.life),
 			// 		pm.shrink);
 			// } else {
-			let part: Particle = new this.params.particleType(
+			let particle: Particle = new particleTypeConstructor(
 				world,
 				xy.copy(),
 				this.params.size.getRandom(),
@@ -72,11 +76,11 @@ export class Explosion {
 				this.params.life.getRandom(),
 				this.params.shrink) as Particle;
 			// }
-			particles.push(part);
-			part.isOnGround = false;
-			part.body.speed = Vector2d.random(this.params.strength).doAdd(this.params.offset);
-			part.gravityFactor = this.params.gravityFactor.getRandom();
-			world.addEntity(part, this.collisionType, this.zIndex);
+			particles.push(particle);
+			particle.isOnGround = false;
+			particle.body.speed.set(Vector2d.random(this.params.strength).doAdd(this.params.offset || new Vector2d()));
+			particle.gravityFactor = this.params.gravityFactor.getRandom();
+			world.addEntity(particle, this.params.collisionType, this.params.zIndex);
 		}
 		return particles;
 	}

@@ -9,7 +9,7 @@
   "author": "delanni.alex@gmail.com",
   "license": "ISC",
   "dependencies": {
-    "ts-loader": "^2.3.4",
+    "awesome-typescript-loader": "^3.2.3",
     "typescript": "^2.4.0",
     "webpack": "^3.5.5"
   }
