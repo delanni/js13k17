@@ -3,7 +3,7 @@ import Vector2d from './vector';
 import PhysicsBody from './physicsbody';
 import { Color, NumberRange } from './utils';
 import { Explosion, ExplosionParameters } from './explosion';
-import World, { CollisionType, ZIndex } from './world';
+import World from './world';
 import { FireEmitter, Emitter, WaterEmitter, PoisonEmitter, LightningEmitter } from "./emitters";
 import { Particle } from './particle';
 
@@ -33,7 +33,7 @@ export class Fireball extends Projectile {
 	private emitter: Emitter;
 
 	constructor(center: Vector2d, world: World) {
-		super(EntityKind.FIREBALL, world, center, new Vector2d(0.2, 0), 3, new Color("#ff2222"));
+		super(EntityKind.PROJECTILE, world, center, new Vector2d(0.2, 0), 3, new Color("#ff2222"));
 		this.emitter = new FireEmitter(this, world);
 		this.emitter.params[0].gravityFactor = new NumberRange(-0.2, 0.1);
 		this.emitter.params[0].strength = 0.05;
@@ -59,8 +59,6 @@ export class Fireball extends Projectile {
 				gravityFactor: new NumberRange(.7),
 				colors: [new Color("#ffcccc")],
 				offset: this.body.speed.multiply(.5),
-				zIndex: ZIndex.FOREGROUND,
-				collisionType: CollisionType.COLLIDE_GROUND,
 				shrink: .6,
 				size: new NumberRange(1,5),
 				life: new NumberRange(0,1000)
@@ -83,7 +81,7 @@ export class Waterbolt extends Projectile {
 	emitter: WaterEmitter;
 
 	constructor(center: Vector2d, world: World) {
-		super(EntityKind.WATERBOLT, world, center, new Vector2d(0.2, 0), 3, new Color("#2930dc"));
+		super(EntityKind.PROJECTILE, world, center, new Vector2d(0.2, 0), 3, new Color("#2930dc"));
 
 		this.emitter = new WaterEmitter(this, world);
 		this.emitter.params[0].count = new NumberRange(-1, 1);
@@ -99,8 +97,6 @@ export class Waterbolt extends Projectile {
 				gravityFactor: new NumberRange(.8),
 				colors: [new Color("#9209da")],
 				offset: this.body.speed.multiply(.25),
-				zIndex: ZIndex.FOREGROUND,
-				collisionType: CollisionType.COLLIDE_GROUND,
 				shrink: .8,
 				size: new NumberRange(1,2),
 				life: new NumberRange(100, 1000)
@@ -134,7 +130,7 @@ export class Poisonball extends Projectile {
 	emitter: PoisonEmitter;
 
 	constructor(center: Vector2d, world: World) {
-		super(EntityKind.POISONBALL, world, center, new Vector2d(0.2, 0), 2, new Color("#aca920"));
+		super(EntityKind.PROJECTILE, world, center, new Vector2d(0.2, 0), 2, new Color("#aca920"));
 		this.emitter = new PoisonEmitter(this, world);
 		this.resources.push(this.emitter);
 	}
@@ -146,8 +142,6 @@ export class Poisonball extends Projectile {
 			const explosionParameters: ExplosionParameters = {
 				gravityFactor: new NumberRange(-.3),
 				colors: [new Color("#ca0920")],
-				zIndex: ZIndex.FOREGROUND,
-				collisionType: CollisionType.NO_COLLISION,
 				shrink: 2,
 				particleType: Particle,
 				// particleType: Bubble,
@@ -185,7 +179,7 @@ export class Lightningbolt extends Projectile {
 	emitter: LightningEmitter;
 
 	constructor(center: Vector2d, world: World, speed: Vector2d) {
-		super(EntityKind.LIGHTNINGBOLT, world, center, speed, 2, new Color("#c90a72"));
+		super(EntityKind.PROJECTILE, world, center, speed, 2, new Color("#c90a72"));
 
 		this.emitter = new LightningEmitter(this, world);
 		this.resources.push(this.emitter);
@@ -200,8 +194,6 @@ export class Lightningbolt extends Projectile {
 				size: new NumberRange(1),
 				gravityFactor: new NumberRange(-.3, .3),
 				colors: [new Color("#0239ba")],
-				zIndex: ZIndex.FOREGROUND,
-				collisionType: CollisionType.COLLIDE_GROUND,
 				shrink: 0,
 				life: new NumberRange(150, 500),
 				strength: 0.3,

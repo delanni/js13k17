@@ -29,18 +29,18 @@ export default class PhysicsBody {
 		this.assertAllValues();
 	}
 
-	assertAllValues(){
-		if (!this.acceleration.isOK()){
+	assertAllValues() {
+		if (!this.acceleration.isOK()) {
 			alert("Acceleration is not ok");
 			throw Error("Acceleration is not ok");
 		}
 
-		if (!this.speed.isOK()){
+		if (!this.speed.isOK()) {
 			alert("Speed is not ok");
 			throw Error("Speed is not OK");
 		}
 
-		if (!this.center.isOK()){
+		if (!this.center.isOK()) {
 			alert("Center is not OK");
 			throw Error("Center is not OK");
 		}
@@ -72,13 +72,25 @@ export default class PhysicsBody {
 		if (Math.abs(this.angularSpeed) < PhysicsBody.EPSILON) this.angularSpeed = 0;
 	}
 
-	intersects(other: PhysicsBody): boolean {
-		if (Math.abs(this.center[0] - other.center[0]) > (this.corner[0] + other.corner[0])) {
-			return false;
-		} else if (Math.abs(this.center[1] - other.center[1]) > (this.corner[1] + other.corner[1])) {
-			return false;
+	intersects(other: PhysicsBody, kind: IntersectionCheckKind): boolean {
+		const thisAABB = this.getAABB();
+		const otherAABB = other.getAABB();
+
+		if (kind === IntersectionCheckKind.ROUND) {
+			return this.center.subtract(other.center).getMagnitude() < (this.corner.getMagnitude() + other.corner.getMagnitude());
+		} else {
+			if (AABB.aabbIntersect(thisAABB, otherAABB)) {
+				if (kind === IntersectionCheckKind.AABB) {
+					return true;
+				} else if (kind === IntersectionCheckKind.POLYGON) {
+					return Polygon.polygonIntersect(this.asPolygon(), other.asPolygon());
+				} else {
+					throw new Error("Not implemented intersection check kind");
+				}
+			} else {
+				return false;
+			}
 		}
-		return true;
 	}
 
 	/**
@@ -93,8 +105,40 @@ export default class PhysicsBody {
 			this.corner[1] * 2];
 	}
 
-	rotate(angle: number): void {
+	getAABB(): AABB {
+		const w = Math.abs(this.corner[0] * 2);
+		const h = Math.abs(this.corner[1] * 2);
+		const r = this.rotation;
+
+		const sinner = Math.abs(Math.sin(r));
+		const kosher = Math.abs(Math.cos(r));
+
+		const width = h * sinner + w * kosher;
+		const height = w * sinner + h * kosher;
+
+		return new AABB(
+			this.center.x - width / 2,
+			this.center.y - height / 2,
+			width,
+			height);
+	}
+
+	asPolygon(): Polygon {
+		const r = this.rotation;
+		const w = this.corner[0] * 2;
+		const h = this.corner[1] * 2;
+
+		const a = new Vector2d(-w / 2, -h / 2).rotate(r).doAdd(this.center);
+		const b = new Vector2d(w / 2, -h / 2).rotate(r).doAdd(this.center);
+		const c = new Vector2d(w / 2, h / 2).rotate(r).doAdd(this.center);
+		const d = new Vector2d(-w / 2, h / 2).rotate(r).doAdd(this.center);
+
+		return new Polygon(a, b, c, d);
+	}
+
+	rotate(angle: number): PhysicsBody {
 		this.rotation += angle;
+		return this;
 	}
 
 	gravitateTo(location: Vector2d, time: number, gravityStrength: number = 0.5): void {
@@ -104,5 +148,96 @@ export default class PhysicsBody {
 		} else {
 			this.center.set(location);
 		}
+	}
+}
+
+export enum IntersectionCheckKind {
+	AABB,
+	ROUND,
+	POLYGON
+}
+
+export class Polygon {
+	public readonly points: Vector2d[];
+
+	constructor(...points: Vector2d[]) {
+		this.points = points;
+	}
+
+	/// Checks if the two polygons are intersecting.
+	static polygonIntersect(a: Polygon, b: Polygon): boolean {
+		let returnValue = true;
+		[a, b].forEach(polygon => {
+			for (let i1 = 0; i1 < polygon.points.length; i1++) {
+				let i2 = (i1 + 1) % polygon.points.length;
+				let p1 = polygon.points[i1];
+				let p2 = polygon.points[i2];
+
+				let normal = new Vector2d(p2[1] - p1[1], p1[0] - p2[0]);
+
+				let minA: number | null = null
+				let maxA: number | null = null;
+				a.points.forEach(p => {
+					var projected = normal[0] * p[0] + normal[1] * p[1];
+					if (minA == null || projected < minA)
+						minA = projected;
+					if (maxA == null || projected > maxA)
+						maxA = projected;
+				});
+
+				let minB: number | null = null;
+				let maxB: number | null = null;
+				b.points.forEach(p => {
+					var projected = normal[0] * p[0] + normal[1] * p[1];
+					if (minB == null || projected < minB)
+						minB = projected;
+					if (maxB == null || projected > maxB)
+						maxB = projected;
+				});
+
+				if (maxA! < minB! || maxB! < minA!)
+					returnValue = false;
+			}
+		});
+		return returnValue;
+	}
+
+	debugDraw(ctx: CanvasRenderingContext2D){
+        ctx.fillStyle = "#ff0000";
+        this.points.forEach(p => ctx.fillRect(p.x, p.y, 1,1));
+	}
+}
+
+export class AABB {
+	get left(): number {
+		return this.x;
+	}
+	get top(): number {
+		return this.y;
+	}
+	get right(): number {
+		return this.x + this.width;
+	}
+	get bottom(): number {
+		return this.y + this.height;
+	}
+
+	constructor(
+		public x: number,
+		public y: number,
+		public width: number,
+		public height: number) {
+	}
+
+	static aabbIntersect(r1: AABB, r2: AABB): boolean {
+		return !(r2.left > r1.right
+			|| r2.right < r1.left
+			|| r2.top > r1.bottom
+			|| r2.bottom < r1.top);
+	}
+
+	debugDraw(ctx: CanvasRenderingContext2D){
+        ctx.strokeStyle = "#6894ca";
+        ctx.strokeRect(this.x, this.y, this.width, this.height);
 	}
 }

@@ -1,7 +1,7 @@
 
 import GameLoop from "./gameLoop";
 import { Mouse, Keyboard } from "./input";
-import World, { CollisionType, ZIndex } from './world';
+import World from './world';
 import { Lightningbolt } from './projectiles';
 import Vector2d from './vector';
 import { Particle } from "./particle";
@@ -9,6 +9,9 @@ import { Color, arrayOf } from "./utils";
 import { Camera } from "./camera";
 import { Player } from "./player";
 import { Civilian } from "./civilian";
+import { Wall } from "./gamemap";
+import { EntityKind } from "./entity";
+import { IntersectionCheckKind } from "./physicsbody";
 
 let log = function (...args: any[]) {
 	document.getElementById("logholder")!.textContent = args.join(", ");
@@ -27,10 +30,16 @@ let camera = new Camera();
 
 const player = new Player(world, new Vector2d(0, 0), 10, new Color("#03ff30"));
 
-const civilians: Civilian[] = arrayOf(50, (i) => new Civilian(world, new Vector2d(Math.random()*640-320, Math.random()*100), 10, new Color("#da92df")));
+const civilians: Civilian[] = arrayOf(50, (i) => new Civilian(world, new Vector2d(Math.random() * 640 - 320, Math.random() * 100), 10, new Color("#da92df")));
+
+const walls: Wall[] = arrayOf(10, i => new Wall(world, Vector2d.random(400), Math.random() * 20, Math.random() * 500, Math.random() * Math.PI));
 
 world.addEntity(player);
 world.addEntities(civilians);
+world.addEntities(walls);
+
+world.addCollisionPair(EntityKind.PLAYER, EntityKind.WALL, IntersectionCheckKind.AABB);
+
 camera.target = player.body;
 
 gameLoop.addAnimateCallback(time => {

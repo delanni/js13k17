@@ -1,37 +1,24 @@
 import Vector2d from './vector';
 import { default as Entity, EntityKind } from './entity';
-
-type EntityGroupName =
-	"nonCollidingEntities"
-	| "collideAllEntities"
-	| "collideGroundEntities"
-	| "backgroundEntities"
-	| "entities"
-	| "centerEntities"
-	| "foregroundEntities";
+import { IntersectionCheckKind } from "./physicsbody";
 
 export default class World {
 
-	private entityGroups: { [key: string]: Entity[] } = {
-		allEntities: [],
-		collidellEntities: [],
-		nonCollidingEntities: [],
-		backgroundEntities: [],
-		centerEntities: [],
-		foregroundEntities: [],
-		collideGroundEntities: [],
-		collideAllEntities: []
+	private entityGroups: { [kind: number]: Entity[] } = {
+		0: []
 	}
-
-	private gravity: Vector2d;
 
 	pool: { [kind: number]: Entity[] };
 
 	private static instance: World;
 	private roundCount: number = 0;
 
+	private colliders: [EntityKind, EntityKind, IntersectionCheckKind, boolean][];
+
 	constructor() {
-		this.gravity = new Vector2d(0, 1e-3);
+		// this.gravity = new Vector2d(0, 1e-3);
+
+		this.colliders = [];
 
 		this.pool = {};
 		// this.pool[EntityKind.PARTICLE] = [];
@@ -41,10 +28,18 @@ export default class World {
 	}
 
 	render(ctx: CanvasRenderingContext2D, time: number) {
-		this.entityGroups.allEntities.forEach((entity) => {
-			if (entity.isVisible) {
-				entity.draw(ctx, this, time);
+		Object.keys(this.entityGroups).forEach((entityGroupKey_: string) => {
+			const entityGroupKey = +entityGroupKey_;
+			if (entityGroupKey === 0) {
+				return;
 			}
+
+			const entityGroup = this.entityGroups[entityGroupKey];
+			entityGroup.forEach(entity => {
+				if (entity.isVisible) {
+					entity.draw(ctx, this, time);
+				}
+			});
 		});
 	};
 
@@ -53,11 +48,11 @@ export default class World {
 
 		this.resolveCollisions(time);
 
-		this.entityGroups.allEntities.forEach(entity => {
+		this.entityGroups[EntityKind.ABSTRACT].forEach(entity => {
 			if (entity.isAlive) {
 				entity.animate(this, time);
 			}
-			entity.applyGravity(this.gravity, time);
+			// entity.applyGravity(this.gravity, time);
 		});
 	};
 
@@ -85,79 +80,55 @@ export default class World {
 	};
 
 	resolveCollisions(time: number) {
-		// let ents = this.collideGroundEntities,
-		// 	lt = ents.length,
-		// 	ej = this.groundElement,
-		// 	ei;
-		// for (let i = 0; i < lt; i++) {
-		// 	ei = ents[i];
-		// 	if (ei && !ei.isMarked && !ei.isOnGround && ej.collidesWith(ei.body)) ei.collideGround(ej);
-		// }
-		//
-		// ents = this.collideAllEntities;
-		// lt = ents.length;
-		// for (let i = 0; i < lt; i++) {
-		// 	ei = ents[i];
-		// 	if (!ei || ei.isMarked || !ei.isAlive) continue;
-		// 	for (j = i + 1; j < lt; j++) {
-		// 		ej = ents[j];
-		// 		if (!ej || ej.isMarked || !ej.isAlive || ej.body.center[0] - parrot.body.center[0] > 300) continue;
-		// 		if (ei.body.intersects(ej.body)) {
-		// 			ei.collideAction(ej);
-		// 			ej.collideAction(ei);
-		// 			break;
-		// 		}
-		// 	}
-		// }
+
+		this.colliders.forEach((collisionPair: [EntityKind, EntityKind, IntersectionCheckKind, boolean]) => {
+			const freeEntityKind = collisionPair[0];
+			const collidedEntityKind = collisionPair[1];
+			const intersectionCheckKind = collisionPair[2];
+			const isMutual = collisionPair[3];
+
+			const freeEntities = this.entityGroups[freeEntityKind];
+			const collidedEntities = this.entityGroups[collidedEntityKind];
+			for (let i = 0; i < freeEntities.length; i++) {
+				const freeEntity = freeEntities[i];
+				if (freeEntity.isMarked || !freeEntity.isAlive) {
+					continue;
+				}
+
+				for (let j = 0; j < collidedEntities.length; j++) {
+					const collidedEntity = collidedEntities[j];
+					if (collidedEntity.isMarked || !collidedEntity.isAlive) {
+						continue;
+					}
+
+					if (freeEntity.body.intersects(collidedEntity.body, intersectionCheckKind)) {
+						freeEntity.collideAction(collidedEntity);
+						if (isMutual) {
+							collidedEntity.collideAction(freeEntity);
+						}
+					}
+				}
+			}
+		});
 	}
 
-	addEntities(entities: Entity[], collisionType: CollisionType = CollisionType.NO_COLLISION, zIndex: ZIndex = ZIndex.CENTER) {
-		entities.forEach(entity => this.addEntity(entity, collisionType, zIndex));
+	addCollisionPair(freeEntity: EntityKind, collidedEntity: EntityKind, intersectionCheckKind: IntersectionCheckKind, isMutual: boolean = false) {
+		this.colliders.push([freeEntity, collidedEntity, intersectionCheckKind, isMutual]);
 	}
 
-	addEntity(e: Entity, collisionType: CollisionType = CollisionType.NO_COLLISION, zIndex: ZIndex = ZIndex.CENTER) {
-		this.entityGroups.allEntities.push(e);
+	addEntities(entities: Entity[], entityKindOverride?: EntityKind) {
+		entities.forEach(entity => this.addEntity(entity, entityKindOverride));
+	}
 
-		switch (collisionType) {
-			case CollisionType.NO_COLLISION:
-				this.entityGroups.nonCollidingEntities.push(e);
-				break;
-			case CollisionType.COLLIDE_GROUND:
-				this.entityGroups.collideGroundEntities.push(e);
-				break;
-			case CollisionType.COLLIDE_ALL:
-				this.entityGroups.collideAllEntities.push(e);
-				break;
-			default:
-				this.entityGroups.nonCollidingEntities.push(e);
-				break;
+	addEntity(entity: Entity, entityKindOverride?: EntityKind) {
+		this.entityGroups[EntityKind.ABSTRACT].push(entity);
+
+		let entityGroup: Entity[] = this.entityGroups[entityKindOverride || entity.kind];
+		if (!entityGroup) {
+			this.entityGroups[entityKindOverride || entity.kind] = [];
+			entityGroup = this.entityGroups[entityKindOverride || entity.kind];
 		}
 
-		switch (zIndex) {
-			case ZIndex.BACKGROUND:
-				this.entityGroups.backgroundEntities.push(e);
-				break;
-			case ZIndex.CENTER:
-				this.entityGroups.centerEntities.push(e);
-				break;
-			case ZIndex.FOREGROUND:
-				this.entityGroups.foregroundEntities.push(e);
-				break;
-			default:
-				this.entityGroups.centerEntities.push(e);
-				break;
-		}
+		entityGroup.push(entity);
 	}
-}
-
-export enum CollisionType {
-	NO_COLLISION = 0,
-	COLLIDE_GROUND = 1,
-	COLLIDE_ALL = 2
-}
-
-export enum ZIndex {
-	FOREGROUND = 2,
-	CENTER = 0,
-	BACKGROUND = 1
 }

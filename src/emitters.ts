@@ -1,5 +1,5 @@
 import { default as Entity, EntityKind, Animatable } from './entity';
-import World, { CollisionType } from './world';
+import World from './world';
 import { Explosion, ExplosionParameters } from './explosion';
 import { Particle } from "./particle";
 import { Color, NumberRange } from './utils';
@@ -31,9 +31,8 @@ export abstract class Emitter implements Animatable {
 
 export class FireEmitter extends Emitter {
 	constructor(entity: Entity, world: World) {
-		super(entity, world, EntityKind.FIREEMITTER, {
+		super(entity, world, EntityKind.EMITTER, {
 			gravityFactor: new NumberRange(-0.4, -0.1),
-			collisionType: CollisionType.NO_COLLISION,
 			life: new NumberRange(600, 1000),
 			count: new NumberRange(0, 2),
 			strength: 0.1,
@@ -47,9 +46,8 @@ export class FireEmitter extends Emitter {
 
 export class PoisonEmitter extends Emitter {
 	constructor(entity: Entity, world: World) {
-		super(entity, world, EntityKind.POISONEMITTER, {
+		super(entity, world, EntityKind.EMITTER, {
 			gravityFactor: new NumberRange(-0.2, -0.4),
-			collisionType: CollisionType.NO_COLLISION,
 			life: new NumberRange(600, 800),
 			count: new NumberRange(0, 1),
 			strength: 0.1,
@@ -63,9 +61,8 @@ export class PoisonEmitter extends Emitter {
 
 export class WaterEmitter extends Emitter {
 	constructor(entity: Entity, world: World) {
-		super(entity, world, EntityKind.WATEREMITTER, {
+		super(entity, world, EntityKind.EMITTER, {
 			gravityFactor: new NumberRange(0.1, 0.4),
-			collisionType: CollisionType.COLLIDE_GROUND,
 			life: new NumberRange(600, 1000),
 			count: new NumberRange(0, 2),
 			offset: new Vector2d(0.1, 0),
@@ -79,9 +76,8 @@ export class WaterEmitter extends Emitter {
 
 export class LightningEmitter extends Emitter {
 	constructor(entity: Entity, world: World) {
-		super(entity, world, EntityKind.LIGHTNINGEMITTER, {
+		super(entity, world, EntityKind.EMITTER, {
 			gravityFactor: new NumberRange(-.1, .1),
-			collisionType: CollisionType.COLLIDE_GROUND,
 			life: new NumberRange(400, 700),
 			count: new NumberRange(0, 1),
 			strength: 0.1,
@@ -90,7 +86,6 @@ export class LightningEmitter extends Emitter {
 			colors: [new Color("#ffac22")]
 		}, {
 			gravityFactor: new NumberRange(0),
-			collisionType: CollisionType.NO_COLLISION,
 			life: new NumberRange(200, 500),
 			count: new NumberRange(0, 2),
 			strength: 0.01,

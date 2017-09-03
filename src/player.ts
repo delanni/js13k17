@@ -15,7 +15,7 @@ export class Player extends Entity {
 		this.color = color;
 		this.body = new PhysicsBody(center, new Vector2d(size / 2, size / 2));
 		this.restitution = .3;
-	} 
+	}
 
 	draw(ctx: CanvasRenderingContext2D, world: World, time: number) {
 		const ltwh = this.body.getLTWH();
@@ -26,8 +26,11 @@ export class Player extends Entity {
 		ctx.fillStyle = this.color.toString();
 		ctx.fillRect(-w / 2, -h / 2, w, h);
 
-		ctx.fillRect(-w / 2, -h / 2 -10, w/2, h/2);
+		ctx.fillRect(-w / 2, -h / 2 - 10, w / 2, h / 2);
 		ctx.restore();
+
+		this.body.getAABB().debugDraw(ctx);
+		this.body.asPolygon().debugDraw(ctx);
 	}
 
 	onAnimate(world: World, time: number) {
@@ -37,5 +40,10 @@ export class Player extends Entity {
 	}
 
 	onRemove(): void {
+	}
+
+	collideAction(otherEntity: Entity) {
+		this.color = new Color("#de8228");
+		setTimeout(() => { this.color = new Color("#39fa93") }, 100);
 	}
 }

@@ -1,6 +1,6 @@
 import { NumberRange, Color, Constructable, randBetween, pickRandom, randBetweenVector } from './utils';
 import { Particle } from './particle';
-import World, { CollisionType, ZIndex } from './world';
+import World from './world';
 import Vector2d from './vector';
 import Entity from './entity';
 
@@ -12,8 +12,6 @@ export interface ExplosionParameters {
 	colors: Color[];
 	center?: Vector2d;
 	life: NumberRange;
-	collisionType?: CollisionType;
-	zIndex?: ZIndex;
 	gravityFactor: NumberRange;
 	shrink?: number;
 	particleType?: Constructable<Entity>
@@ -40,8 +38,6 @@ export class Explosion {
 				colors: [new Color("#ec17fa"), new Color("#a2ffcb")],
 				center: new Vector2d(0, 0),
 				life: new NumberRange(400, 800),
-				collisionType: CollisionType.NO_COLLISION,
-				zIndex: ZIndex.BACKGROUND,
 				gravityFactor: new NumberRange(1),
 				shrink: 0,
 				particleType: Particle
@@ -79,7 +75,7 @@ export class Explosion {
 			particles.push(particle);
 			particle.body.speed.set(Vector2d.random(this.params.strength).doAdd(this.params.offset || new Vector2d()));
 			particle.gravityFactor = this.params.gravityFactor.getRandom();
-			world.addEntity(particle, this.params.collisionType, this.params.zIndex);
+			world.addEntity(particle);
 		}
 		return particles;
 	}

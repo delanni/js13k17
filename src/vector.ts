@@ -6,6 +6,14 @@ export default class Vector2d {
 		this[1] = y || 0;
 	}
 
+	get x(): number {
+		return this[0];
+	}
+
+	get y(): number {
+		return this[1];
+	}
+
 	static random(base: number = 1): Vector2d {
 		const x = Math.random() * base - base / 2;
 		const y = Math.random() * base - base / 2;
@@ -71,4 +79,27 @@ export default class Vector2d {
 	isOK(): boolean {
 		return isFinite(this[0]) && isFinite(this[1]);
 	}
+
+	multiplyMatrix(matrix: Matrix2) {
+		const x = this.x * matrix.m11 + this.y * matrix.m21;
+		const y = this.x * matrix.m12 + this.y * matrix.m22;
+		return new Vector2d(x, y);
+	}
+
+	rotate(tetha: number){
+		const rotationMatrix = new Matrix2(
+			Math.cos(tetha), Math.sin(tetha),
+			-Math.sin(tetha), Math.cos(tetha)
+		);
+		return this.multiplyMatrix(rotationMatrix);
+	}
+}
+
+export class Matrix2 {
+	constructor(
+		public m11: number,
+		public m12: number,
+		public m21: number,
+		public m22: number
+	){}
 }
