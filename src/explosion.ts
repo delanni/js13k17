@@ -77,7 +77,6 @@ export class Explosion {
 				this.params.shrink) as Particle;
 			// }
 			particles.push(particle);
-			particle.isOnGround = false;
 			particle.body.speed.set(Vector2d.random(this.params.strength).doAdd(this.params.offset || new Vector2d()));
 			particle.gravityFactor = this.params.gravityFactor.getRandom();
 			world.addEntity(particle, this.params.collisionType, this.params.zIndex);

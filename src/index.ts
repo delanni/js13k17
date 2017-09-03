@@ -5,10 +5,12 @@ import World, { CollisionType, ZIndex } from './world';
 import { Lightningbolt } from './projectiles';
 import Vector2d from './vector';
 import { Particle } from "./particle";
-import { Color } from "./utils";
+import { Color, arrayOf } from "./utils";
 import { Camera } from "./camera";
+import { Player } from "./player";
+import { Civilian } from "./civilian";
 
-let log = function(...args: any[]){
+let log = function (...args: any[]) {
 	document.getElementById("logholder")!.textContent = args.join(", ");
 	console.log.apply(console, arguments);
 }
@@ -17,90 +19,30 @@ let canvas = document.getElementById("mainCanvas") as HTMLCanvasElement;
 
 let mouse = new Mouse(canvas);
 let keyboard = new Keyboard();
-
 let gameLoop: GameLoop = new GameLoop(canvas);
-
 let world = new World();
-
 let camera = new Camera();
 
 (<any>window)["world"] = world;
 
-// gameLoop.addRenderCallback(function(time, context){
-// 	context.save();
-// 	context.translate(mouse.x, mouse.y);
-// 	context.fillRect(-4, -4, 8, 8);
-// 	context.restore();
-// });
+const player = new Player(world, new Vector2d(0, 0), 10, new Color("#03ff30"));
 
-// mouse.onClick(2, (ev, scaledX, scaledY) => {
-// 	let e = new Lightningbolt(new Vector2d(scaledX, scaledY), world, Vector2d.random(0.5));
-// 	world.addEntity(e, CollisionType.NO_COLLISION, ZIndex.CENTER);
-// });
+const civilians: Civilian[] = arrayOf(50, (i) => new Civilian(world, new Vector2d(Math.random()*640-320, Math.random()*100), 10, new Color("#da92df")));
 
-const player = new Particle(world, new Vector2d(0, 0), 20, new Color("#03ff30"), Infinity, 0);
-player.gravityFactor = 0;
-player.body.corner.set(new Vector2d(10, 20));
-// keyboard.on(Keyboard.KEY.W, event => {
-// 	player.body.speed.doAdd(new Vector2d(0,-1));
-// });
+world.addEntity(player);
+world.addEntities(civilians);
+camera.target = player.body;
 
-// keyboard.on(Keyboard.KEY.S, event => {
-// 	player.body.speed.doAdd(new Vector2d(0,1));
-// });
-
-// keyboard.on(Keyboard.KEY.A, event => {
-// 	player.body.speed.doAdd(new Vector2d(-1,0));
-// });
-
-// keyboard.on(Keyboard.KEY.D, event => {
-// 	player.body.speed.doAdd(new Vector2d(1,0));
-// });
 gameLoop.addAnimateCallback(time => {
 	world.animate(time);
 	camera.animate(time);
 });
 
 gameLoop.addAnimateCallback((n) => {
+	const direction = readDirectionFromKeyboard();
 
-	const playerSpeedFactor = 0.001;
-	const direction = new Vector2d(0, 0);
-
-	if (keyboard.getKey(Keyboard.KEY.W)) {
-		direction.doAdd(new Vector2d(0, -1));
-	}
-	if (keyboard.getKey(Keyboard.KEY.S)) {
-		direction.doAdd(new Vector2d(0, 1));
-	}
-	if (keyboard.getKey(Keyboard.KEY.A)) {
-		direction.doAdd(new Vector2d(-1, 0));
-	}
-	if (keyboard.getKey(Keyboard.KEY.D)) {
-		direction.doAdd(new Vector2d(1, 0));
-	}
-
-	if (keyboard.getKey(Keyboard.KEY.I)) {
-		camera.body.center.doAdd(new Vector2d(0, -1));
-	}
-	if (keyboard.getKey(Keyboard.KEY.K)) {
-		camera.body.center.doAdd(new Vector2d(0, 1));
-	}
-	if (keyboard.getKey(Keyboard.KEY.J)) {
-		camera.body.center.doAdd(new Vector2d(-1, 0));
-	}
-	if (keyboard.getKey(Keyboard.KEY.L)) {
-		camera.body.center.doAdd(new Vector2d(1, 0));
-	}
-
-	if (direction.getMagnitude() !== 0) {
-		player.body.rotation = direction.toRotation();
-	}
-
-	player.body.applyAcceleration(direction.normalize(playerSpeedFactor), n);
+	player.body.applyAcceleration(direction.normalize(Player.PLAYER_SPEED_FACTOR), n);
 });
-
-world.addEntity(player);
-camera.target = player.body;
 
 gameLoop.addRenderCallback(function (time, context) {
 	if (keyboard.getKey(220 /* \ */)) {
@@ -121,3 +63,21 @@ gameLoop.addRenderCallback(function (time, context) {
 });
 
 gameLoop.start();
+
+function readDirectionFromKeyboard() {
+	const direction = new Vector2d(0, 0);
+
+	if (keyboard.getKey(Keyboard.KEY.W)) {
+		direction.doAdd(new Vector2d(0, -1));
+	}
+	if (keyboard.getKey(Keyboard.KEY.S)) {
+		direction.doAdd(new Vector2d(0, 1));
+	}
+	if (keyboard.getKey(Keyboard.KEY.A)) {
+		direction.doAdd(new Vector2d(-1, 0));
+	}
+	if (keyboard.getKey(Keyboard.KEY.D)) {
+		direction.doAdd(new Vector2d(1, 0));
+	}
+	return direction;
+}

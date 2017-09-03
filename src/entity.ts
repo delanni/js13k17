@@ -3,49 +3,52 @@ import Vector2d from './vector';
 import { Emitter } from "./emitters";
 import PhysicsBody from "./physicsbody";
 
-export default abstract class Entity {
-	maxLife: number;
-	resources: Emitter[];
-	kind : EntityKind;
-	isVisible: boolean;
-	isAlive: boolean;
-	isOnGround: boolean;
-	isMarked: boolean;
+export interface Animatable {
+	animate(world: World, time: number): void;
 	life: number;
-	protected world: World;
+	isAlive: boolean;
+	resources: Animatable[];
+}
 
-	constructor(kind: EntityKind, world: World) {
+export interface Drawable {
+	draw(ctx: CanvasRenderingContext2D, world: World, time: number): void;
+	isVisible: boolean;
+}
+
+export abstract class AnimatableDefault implements Animatable {
+	life: number;
+	isAlive: boolean;
+	resources: Animatable[];
+	body: PhysicsBody;
+	isMarked: boolean;
+
+	abstract onAnimate(world: World, time: number): void;
+	abstract onRemove(): void;
+
+	constructor() {
 		this.resources = [];
-		this.world = world;
-		this.kind = kind;
-		this.isVisible = true;
 		this.isAlive = true;
-		this.isOnGround = false;
 		this.isMarked = false;
-		this.life = this.maxLife = Infinity;
 	}
 
-	draw(ctx: CanvasRenderingContext2D, world: World, time: number) {
-
-	}
-
-	collideAction(otherEntity: Entity) {
-
-	}
-
-	applyGravity(gravityVector: Vector2d, time: number) {
-	}
-
-	// collideGround() {
-	//
-	// }
-
-	onRemove() {
-
+	animate(world: World, time: number) {
+		if (!this.isAlive) return;
+		if (this.body) {
+			this.body.tick(time);
+		}
+		this.onAnimate(world, time);
+		if (this.resources) {
+			this.resources.forEach((e: Emitter) => {
+				e.animate(world, time);
+			});
+		}
+		this.life -= time;
+		if (this.life < 0) {
+			this.markForRemoval();
+		}
 	}
 
 	markForRemoval() {
-		this.isVisible = false;
 		this.isAlive = false;
 		this.isMarked = true;
 		this.onRemove();
@@ -53,56 +56,60 @@ export default abstract class Entity {
 			this.resources.length = 0;
 		}
 	}
+}
 
-	body: PhysicsBody;
+export default abstract class Entity extends AnimatableDefault implements Drawable {
+	maxLife: number;
+	kind: EntityKind;
+	isVisible: boolean;
+	protected world: World;
 
-	onAnimate(world: World, time: number) {
-
+	constructor(kind: EntityKind, world: World) {
+		super();
+		this.resources = [];
+		this.world = world;
+		this.kind = kind;
+		this.isVisible = true;
+		this.life = this.maxLife = Infinity;
 	}
 
-	animate(world: World, time: number) {
-		if (!this.isAlive) return;
-		this.body.tick(time);
-		this.onAnimate(world, time);
-		if (this.resources) {
-			this.resources.forEach((e: Emitter) => {
-				e.tick(world, time);
-			});
-		}
-		this.life -= time;
-		if (this.life < 0 || this.life > this.maxLife) {
-			this.markForRemoval();
-		}
+	draw(ctx: CanvasRenderingContext2D, world: World, time: number) {
+	}
+
+	collideAction(otherEntity: Entity) {
+	}
+
+	applyGravity(gravityVector: Vector2d, time: number) {
 	}
 }
 
 export enum EntityKind {
 	ABSTRACT = -1,
 
-		// TARGETS
+	// TARGETS
 	FIRETARGET = 0,
 	WATERTARGET = 1,
 	POISONTARGET = 2,
 	LIGHTNINGTARGET = 3,
 
-		// REUSABLES
+	// REUSABLES
 	PARTICLE = 92,
 	BUBBLE = 91,
 	COLLECTIBLE = 90,
 
-		// PROJECTILES
+	// PROJECTILES
 	FIREBALL = 40,
 	WATERBOLT = 41,
 	POISONBALL = 42,
 	LIGHTNINGBOLT = 43,
 
-		// EMITTERS
+	// EMITTERS
 	FIREEMITTER = 50,
 	WATEREMITTER = 51,
 	POISONEMITTER = 52,
 	LIGHTNINGEMITTER = 53,
 
-		// ETC
+	// ETC
 	PLAYER = 11,
 	SPRITE = 10
 }

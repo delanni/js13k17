@@ -69,6 +69,13 @@ export class Fireball extends Projectile {
 			exp.fire(this.body.center, this.world);
 		}
 	}
+
+	onRemove(): void {
+		throw Error ("To be implemented");
+	}
+
+	onAnimate(world: World, time: number): void {
+	}
 }
 
 
@@ -101,7 +108,7 @@ export class Waterbolt extends Projectile {
 			const exp = new Explosion(explosionParameters);
 			exp.fire(this.body.center, this.world);
 		}
-	};
+	}
 
 	draw(ctx: CanvasRenderingContext2D, world: World, time: number) {
 		const ltwh = this.body.getLTWH(), l = ltwh[0], t = ltwh[1], w = ltwh[2], h = ltwh[3];
@@ -113,6 +120,13 @@ export class Waterbolt extends Projectile {
 		ctx.arc(0, 0, this.body.corner.getMagnitude(), 0, 2 * Math.PI, false);
 		ctx.stroke();
 		ctx.restore();
+	}
+
+	onRemove(): void {
+		throw new Error("Method not implemented.");
+	}
+
+	onAnimate(world: World, time: number): void {
 	}
 }
 
@@ -158,6 +172,13 @@ export class Poisonball extends Projectile {
 		ctx.fill();
 		ctx.restore();
 	}
+
+	onRemove(): void {
+		throw new Error("Method not implemented.");
+	}
+
+	onAnimate(world: World, time: number): void {
+	}
 }
 
 export class Lightningbolt extends Projectile {
@@ -188,11 +209,11 @@ export class Lightningbolt extends Projectile {
 			});
 			exp.fire(this.body.center, this.world);
 		}
-	};
+	}
 
 	onAnimate(world: World, time: number) {
 		this.body.center[1] += (Math.random() - 0.5) / 1300 * time * 155;
-		this.resources.forEach(r => r.tick(world, time));
+		this.resources.forEach(r => r.animate(world, time));
 	}
 
 	draw(ctx: CanvasRenderingContext2D, world: World, time: number) {
@@ -202,5 +223,9 @@ export class Lightningbolt extends Projectile {
 		ctx.fillStyle = this.color.toString();
 		ctx.fillRect(-w / 2, -w / 2, w, w);
 		ctx.restore();
+	}
+
+	onRemove(): void {
+		throw new Error("Method not implemented.");
 	}
 }

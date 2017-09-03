@@ -1,4 +1,4 @@
-import { default as Entity, EntityKind } from './entity';
+import { default as Entity, EntityKind, Animatable } from './entity';
 import World, { CollisionType } from './world';
 import { Explosion, ExplosionParameters } from './explosion';
 import { Particle } from "./particle";
@@ -6,7 +6,10 @@ import { Color, NumberRange } from './utils';
 import Vector2d from './vector';
 
 
-export abstract class Emitter {
+export abstract class Emitter implements Animatable {
+	life: number;
+	isAlive: boolean;
+	resources: Animatable[];
 	kind: EntityKind;
 	entity: Entity;
 	world: World;
@@ -21,7 +24,7 @@ export abstract class Emitter {
 		this.exploders = this.params.map(x => new Explosion(x));
 	}
 
-	tick(world: World, time: number) {
+	animate(world: World, time: number) {
 		this.exploders.forEach(x => x.fire(this.entity.body.center, this.world));
 	}
 }

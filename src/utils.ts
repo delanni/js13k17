@@ -15,6 +15,16 @@ export function clamp(value: number, min: number, max: number) {
 	return Math.min(Math.max(value, min), max);
 }
 
+export function arrayOf<T>(size: number, filler: (index: number) => T): T[] {
+	const array: T[] = new Array(size);
+
+	for (let i = 0; i < size; i++) {
+		array[i] = filler(i);
+	}
+
+	return array;
+}
+
 // export function maxInrange<T>(array: T[], from:number, to:number) {
 // 	if (from >= 0 && to <= this.length && from < to) return Math.max.apply(null, this.slice(from, to));
 // 	return NaN;

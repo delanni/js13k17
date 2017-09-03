@@ -7,7 +7,6 @@ type SpriteSheet = any;
 type Animation = any;
 
 class SpriteEntity extends Entity {
-
 	spritesheet: any;
 	private animations: Animation[];
 	private currentAnimation: number;
@@ -44,5 +43,13 @@ class SpriteEntity extends Entity {
 		const a = this.animations[this.currentAnimation];
 		a.drawFrame(ctx, time, this.body.center[0] - this.body.corner[0],
 			this.body.center[1] - this.body.corner[1], this.scale[0], this.scale[1]);
+	}
+
+	onAnimate(world: World, time: number): void {
+		
+	}
+	
+	onRemove(): void {
+		throw new Error("Method not implemented.");
 	}
 }

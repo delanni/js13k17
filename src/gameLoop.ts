@@ -20,58 +20,6 @@ export default class GameLoop {
 		}
 	}
 
-	// function ArcadeAudio() {
-	// 	this.sounds = {};
-	// }
-
-	// ArcadeAudio.prototype.add = function(key, count, settings) {
-	// 	this.sounds[key] = [];
-	// 	settings.forEach(function(elem, index) {
-	// 		this.sounds[key].push({
-	// 			tick: 0,
-	// 			count: count,
-	// 			pool: []
-	// 		});
-	// 		for (var i = 0; i < count; i++) {
-	// 			var audio = new Audio();
-	// 			// audio.src = jsfxr(elem);
-	// 			this.sounds[key][index].pool.push(audio);
-	// 		}
-	// 	}, this);
-	// };
-
-	// ArcadeAudio.prototype.play = function(key) {
-	// 	if (!window.mute) {
-	// 		var sound = this.sounds[key];
-	// 		var soundData = sound.length > 1 ? sound[Math.floor(Math.random() * sound.length)] : sound[0];
-	// 		soundData.pool[soundData.tick].play();
-	// 		soundData.tick < soundData.count - 1 ? soundData.tick++ : soundData.tick = 0;
-	// 	}
-	// };
-
-	// var aa = new ArcadeAudio();
-
-	// aa.add('coin', 5, [
-	// 	[0, , 0.0116, 0.3061, 0.432, 0.4097, , , , , , 0.5982, 0.6732, , , , , , 1, , , , , 0.5]
-	// ]);
-
-	// var s = new SpriteSheet("img/atlas2.png", "atlas");
-	// /// SETUP EVERYTIME
-	// var loadGameEntities = function(loader) {
-	// 	atlas = loader.spriteSheets["atlas"];
-	// 	world = new World();
-	// 	ground = new GroundEntity(15, 3000);
-	// 	world.groundElement = ground;
-	// 	parrot = new SpriteEntity(atlas, new Vector2d(0, 73), 16, 12, [
-	// 		[16, 12, 6, 400, [27, 0]]
-	// 	]);
-
-	// }
-
-	// var loader = new SpriteSheetLoader(loadGameEntities);
-	// loader.addItem(s);
-	// loader.start(10);
-
 	// SETUP LOOP+FUNCTIONS
 
 	private animateListeners: AnimateCallback[] = [];

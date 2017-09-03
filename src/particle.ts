@@ -28,8 +28,6 @@ export class Particle extends Entity {
 		ctx.rotate(this.body.rotation);
 		ctx.fillStyle = this.color;
 		ctx.fillRect(-w / 2, -h / 2, w, h);
-
-		ctx.fillRect(-w / 2, -h / 2 -20, w/2, h/2);
 		ctx.restore();
 	}
 
@@ -41,15 +39,6 @@ export class Particle extends Entity {
 		this.body.applyAcceleration(gravityVector.multiply(this.gravityFactor), time);
 	}
 
-	// collideGround(other: Entity) {
-	// 	this.body.speed[1] *= -this.restitution;
-	// 	this.body.speed[0] *= this.restitution;
-	// 	this.body.angularSpeed *= -this.restitution;
-	// 	this.body.limitSpeed();
-	// 	if (this.body.speed.getMagnitude() == 0) {
-	// 		this.isOnGround = true;
-	// 		this.body.angularSpeed = 0;
-	// 	}
-	// }
-
+	onRemove(): void {
+	}
 }

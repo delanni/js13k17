@@ -25,6 +25,25 @@ export default class PhysicsBody {
 		this.speed.doAdd(this.acceleration.multiply(ms));
 		this.speed.doMultiply(1 - this.friction * ms);
 		this.limitSpeed();
+
+		this.assertAllValues();
+	}
+
+	assertAllValues(){
+		if (!this.acceleration.isOK()){
+			alert("Acceleration is not ok");
+			throw Error("Acceleration is not ok");
+		}
+
+		if (!this.speed.isOK()){
+			alert("Speed is not ok");
+			throw Error("Speed is not OK");
+		}
+
+		if (!this.center.isOK()){
+			alert("Center is not OK");
+			throw Error("Center is not OK");
+		}
 	}
 
 	move(vector: Vector2d) {

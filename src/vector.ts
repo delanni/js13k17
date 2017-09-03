@@ -67,4 +67,8 @@ export default class Vector2d {
 	toRotation(): number {
 		return Math.atan2(this[1], this[0]) + Math.PI / 2;
 	}
+
+	isOK(): boolean {
+		return isFinite(this[0]) && isFinite(this[1]);
+	}
 }

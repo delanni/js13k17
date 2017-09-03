@@ -57,9 +57,7 @@ export default class World {
 			if (entity.isAlive) {
 				entity.animate(this, time);
 			}
-			if (!entity.isOnGround) {
-				entity.applyGravity(this.gravity, time);
-			}
+			entity.applyGravity(this.gravity, time);
 		});
 	};
 
@@ -111,7 +109,11 @@ export default class World {
 		// 		}
 		// 	}
 		// }
-	};
+	}
+
+	addEntities(entities: Entity[], collisionType: CollisionType = CollisionType.NO_COLLISION, zIndex: ZIndex = ZIndex.CENTER) {
+		entities.forEach(entity => this.addEntity(entity, collisionType, zIndex));
+	}
 
 	addEntity(e: Entity, collisionType: CollisionType = CollisionType.NO_COLLISION, zIndex: ZIndex = ZIndex.CENTER) {
 		this.entityGroups.allEntities.push(e);
