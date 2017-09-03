@@ -202,9 +202,55 @@ export class Polygon {
 		return returnValue;
 	}
 
-	debugDraw(ctx: CanvasRenderingContext2D){
-        ctx.fillStyle = "#ff0000";
-        this.points.forEach(p => ctx.fillRect(p.x, p.y, 1,1));
+	getNormalAt(point: Vector2d): Vector2d {
+		const pointsLength = this.points.length;
+		const centroid = this.getCentroid();
+		const pointRotation = point.subtract(centroid).toRotation();
+		for (let i = 0; i < pointsLength; i++) {
+			const thisPoint = this.points[i].subtract(centroid);
+			const nextPoint = this.points[(i + 1) % pointsLength].subtract(centroid);
+			if (Polygon.isBetween(thisPoint.toRotation() , pointRotation , nextPoint.toRotation())) {
+				return nextPoint.subtract(thisPoint).getNormal();
+			}
+		}
+		return new Vector2d();
+	}
+
+	getSideVectorAt(point: Vector2d): Vector2d {
+		const pointsLength = this.points.length;
+		const centroid = this.getCentroid();
+		const pointRotation = point.subtract(centroid).toRotation();
+		for (let i = 0; i < pointsLength; i++) {
+			const thisPoint = this.points[i].subtract(centroid);
+			const nextPoint = this.points[(i + 1) % pointsLength].subtract(centroid);
+			if (Polygon.isBetween(thisPoint.toRotation() , pointRotation , nextPoint.toRotation())) {
+				return nextPoint.subtract(thisPoint);
+			}
+		}
+		return new Vector2d();
+	}
+
+	private static normalizeAngle(a: number) {
+		return (a + Math.PI * 3) % (Math.PI*2) - Math.PI;
+	}
+	private static isBetween(angle1: number, target: number, angle2: number): boolean {
+		const n1 = Polygon.normalizeAngle(angle1 - target);
+		const n2 = Polygon.normalizeAngle(angle2 - target);
+		return n1 <= 0 && 0 <= n2;
+	}
+
+	getCentroid(): Vector2d {
+		const coordinateSum = this.points.reduce((accumulator, next) => {
+			accumulator[0] += next.x;
+			accumulator[1] += next.y;
+			return accumulator;
+		}, [0, 0]);
+		return new Vector2d(coordinateSum[0] / this.points.length, coordinateSum[1] / this.points.length);
+	}
+
+	debugDraw(ctx: CanvasRenderingContext2D) {
+		ctx.fillStyle = "#ff0000";
+		this.points.forEach(p => ctx.fillRect(p.x, p.y, 1, 1));
 	}
 }
 
@@ -236,8 +282,8 @@ export class AABB {
 			|| r2.bottom < r1.top);
 	}
 
-	debugDraw(ctx: CanvasRenderingContext2D){
-        ctx.strokeStyle = "#6894ca";
-        ctx.strokeRect(this.x, this.y, this.width, this.height);
+	debugDraw(ctx: CanvasRenderingContext2D) {
+		ctx.strokeStyle = "#6894ca";
+		ctx.strokeRect(this.x, this.y, this.width, this.height);
 	}
 }

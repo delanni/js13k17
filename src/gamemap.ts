@@ -63,11 +63,11 @@ export class Wall extends Entity {
 
     draw(ctx: CanvasRenderingContext2D, world: World, time: number) {
         let ltwh = this.body.getLTWH(), l = ltwh[0], t = ltwh[1], w = ltwh[2], h = ltwh[3];
-		ctx.save();
-		ctx.translate(l + w / 2, t + h / 2);
-		ctx.rotate(this.body.rotation);
-		ctx.fillStyle = Wall.WALL_COLOR;
-		ctx.fillRect(-w / 2, -h / 2, w, h);
+        ctx.save();
+        ctx.translate(l + w / 2, t + h / 2);
+        ctx.rotate(this.body.rotation);
+        ctx.fillStyle = Wall.WALL_COLOR;
+        ctx.fillRect(-w / 2, -h / 2, w, h);
         ctx.restore();
 
         this.body.getAABB().debugDraw(ctx);

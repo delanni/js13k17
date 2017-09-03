@@ -66,7 +66,7 @@ export default class Vector2d {
 
 	normalize(scaling: number = 1): Vector2d {
 		const magnitude = this.getMagnitude();
-		if (magnitude === 0){
+		if (magnitude === 0) {
 			return new Vector2d();
 		}
 		return this.multiply(1 / magnitude * scaling);
@@ -86,12 +86,20 @@ export default class Vector2d {
 		return new Vector2d(x, y);
 	}
 
-	rotate(tetha: number){
+	getNormal() {
+		return new Vector2d(this.y, -this.x);
+	}
+
+	rotate(tetha: number) {
 		const rotationMatrix = new Matrix2(
 			Math.cos(tetha), Math.sin(tetha),
 			-Math.sin(tetha), Math.cos(tetha)
 		);
 		return this.multiplyMatrix(rotationMatrix);
+	}
+
+	dotProduct(otherVector: Vector2d): number {
+		return this.x * otherVector.x + this.y * otherVector.y;
 	}
 }
 
@@ -101,5 +109,5 @@ export class Matrix2 {
 		public m12: number,
 		public m21: number,
 		public m22: number
-	){}
+	) { }
 }

@@ -102,9 +102,9 @@ export default class World {
 					}
 
 					if (freeEntity.body.intersects(collidedEntity.body, intersectionCheckKind)) {
-						freeEntity.collideAction(collidedEntity);
+						freeEntity.collideAction(collidedEntity, time);
 						if (isMutual) {
-							collidedEntity.collideAction(freeEntity);
+							collidedEntity.collideAction(freeEntity, time);
 						}
 					}
 				}

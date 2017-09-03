@@ -32,7 +32,8 @@ const player = new Player(world, new Vector2d(0, 0), 10, new Color("#03ff30"));
 
 const civilians: Civilian[] = arrayOf(50, (i) => new Civilian(world, new Vector2d(Math.random() * 640 - 320, Math.random() * 100), 10, new Color("#da92df")));
 
-const walls: Wall[] = arrayOf(10, i => new Wall(world, Vector2d.random(400), Math.random() * 20, Math.random() * 500, Math.random() * Math.PI));
+// const walls: Wall[] = arrayOf(10, i => new Wall(world, Vector2d.random(400), Math.random() * 20, Math.random() * 500, Math.random() * Math.PI));
+const walls = [new Wall(world, new Vector2d(100, 100), 300, 100, 0)];
 
 world.addEntity(player);
 world.addEntities(civilians);
@@ -70,6 +71,28 @@ gameLoop.addRenderCallback(function (time, context) {
 		context.restore();
 	}
 });
+
+// gameLoop.addRenderCallback((time, context) => {
+// 	var p = walls[0].body.asPolygon();
+// 	var mouseWorldPosition = new Vector2d(mouse.x, mouse.y).add(camera.body.center).subtract(camera.body.corner);
+
+// 	var normal = p.getNormalAt(mouseWorldPosition);
+
+// 	context.save();
+// 	const translation = camera.getTranslation();
+// 	context.translate(translation[0], translation[1]);
+
+// 	context.fillStyle = "white";
+// 	context.fillRect(mouseWorldPosition.x, mouseWorldPosition.y, 5, 5);
+
+// 	context.beginPath();
+// 	context.moveTo(p.getCentroid().x, p.getCentroid().y);
+// 	context.lineTo(mouseWorldPosition.x, mouseWorldPosition.y);
+// 	context.lineTo(mouseWorldPosition.x + normal.x, mouseWorldPosition.y + normal.y);
+// 	context.stroke();
+
+// 	context.restore();
+// });
 
 gameLoop.start();
 

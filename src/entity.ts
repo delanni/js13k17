@@ -76,7 +76,7 @@ export default abstract class Entity extends AnimatableDefault implements Drawab
 	draw(ctx: CanvasRenderingContext2D, world: World, time: number) {
 	}
 
-	collideAction(otherEntity: Entity) {
+	collideAction(otherEntity: Entity, time: number) {
 	}
 
 	applyGravity(gravityVector: Vector2d, time: number) {
