@@ -633,8 +633,8 @@ let camera = new __WEBPACK_IMPORTED_MODULE_5__camera__["a" /* Camera */]();
 window["world"] = world;
 const player = new __WEBPACK_IMPORTED_MODULE_6__player__["a" /* Player */](world, new __WEBPACK_IMPORTED_MODULE_3__vector__["a" /* default */](0, 0), 10, new __WEBPACK_IMPORTED_MODULE_4__utils__["a" /* Color */]("#03ff30"));
 const civilians = Object(__WEBPACK_IMPORTED_MODULE_4__utils__["b" /* arrayOf */])(50, (i) => new __WEBPACK_IMPORTED_MODULE_7__civilian__["a" /* Civilian */](world, new __WEBPACK_IMPORTED_MODULE_3__vector__["a" /* default */](Math.random() * 640 - 320, Math.random() * 100), 10, new __WEBPACK_IMPORTED_MODULE_4__utils__["a" /* Color */]("#da92df")));
-// const walls: Wall[] = arrayOf(10, i => new Wall(world, Vector2d.random(400), Math.random() * 20, Math.random() * 500, Math.random() * Math.PI));
-const walls = [new __WEBPACK_IMPORTED_MODULE_8__gamemap__["a" /* Wall */](world, new __WEBPACK_IMPORTED_MODULE_3__vector__["a" /* default */](100, 100), 300, 100, 0)];
+const walls = Object(__WEBPACK_IMPORTED_MODULE_4__utils__["b" /* arrayOf */])(5, i => new __WEBPACK_IMPORTED_MODULE_8__gamemap__["a" /* Wall */](world, __WEBPACK_IMPORTED_MODULE_3__vector__["a" /* default */].random(400), Math.random() * 20, Math.random() * 500, Math.random() * Math.PI));
+// const walls = [new Wall(world, new Vector2d(100, 100), 300, 100, 0)];
 world.addEntity(player);
 world.addEntities(civilians);
 world.addEntities(walls);
@@ -1102,8 +1102,6 @@ class Player extends __WEBPACK_IMPORTED_MODULE_0__entity__["c" /* default */] {
         this.color = new __WEBPACK_IMPORTED_MODULE_3__utils__["a" /* Color */]("#de8228");
         setTimeout(() => { this.color = new __WEBPACK_IMPORTED_MODULE_3__utils__["a" /* Color */]("#39fa93"); }, 100);
         if (otherEntity.kind === __WEBPACK_IMPORTED_MODULE_0__entity__["b" /* EntityKind */].WALL) {
-            // const wallNormal = otherEntity.body.asPolygon().getNormalAt(this.body.center).normalize();
-            // this.body.speed.doAdd(wallNormal);
             const wallSideVector = otherEntity.body.asPolygon().getSideVectorAt(this.body.center).normalize();
             const projectedSpeedVector = wallSideVector.multiply(this.body.speed.dotProduct(wallSideVector));
             this.body.speed.set(projectedSpeedVector.add(wallSideVector.getNormal().doMultiply(Player.PLAYER_SPEED_FACTOR * time)));

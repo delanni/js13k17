@@ -47,8 +47,6 @@ export class Player extends Entity {
 		setTimeout(() => { this.color = new Color("#39fa93") }, 100);
 
 		if (otherEntity.kind === EntityKind.WALL) {
-			// const wallNormal = otherEntity.body.asPolygon().getNormalAt(this.body.center).normalize();
-			// this.body.speed.doAdd(wallNormal);
 			const wallSideVector = otherEntity.body.asPolygon().getSideVectorAt(this.body.center).normalize();
 			const projectedSpeedVector = wallSideVector.multiply(this.body.speed.dotProduct(wallSideVector));
 			this.body.speed.set(projectedSpeedVector.add(wallSideVector.getNormal().doMultiply(Player.PLAYER_SPEED_FACTOR * time)));
