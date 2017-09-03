@@ -38,7 +38,7 @@ world.addEntity(player);
 world.addEntities(civilians);
 world.addEntities(walls);
 
-world.addCollisionPair(EntityKind.PLAYER, EntityKind.WALL, IntersectionCheckKind.AABB);
+world.addCollisionPair(EntityKind.PLAYER, EntityKind.WALL, IntersectionCheckKind.POLYGON);
 
 camera.target = player.body;
 
