@@ -1,3 +1,17 @@
+let webpack = require("webpack");
+let ShellPlugin = require("webpack-shell-plugin");
+
+let uglifyMinify = new webpack.optimize.UglifyJsPlugin({
+  compress: {
+      warnings: false
+  },
+  sourceMap: true
+});
+
+let shellPlugin = new ShellPlugin({
+  onBuildEnd: ['node pack.js']
+});
+
 module.exports = {
     entry: './src/index.ts',
     output: {
@@ -13,6 +27,10 @@ module.exports = {
         { test: /\.tsx?$/, loader: 'awesome-typescript-loader?sourceMap=true' }
       ]
     },
+    plugins: [
+      uglifyMinify,
+      shellPlugin
+    ],
      // Enable sourcemaps for debugging webpack's output.
      devtool: "source-map"
   }

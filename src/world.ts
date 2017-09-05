@@ -89,6 +89,9 @@ export default class World {
 
 			const freeEntities = this.entityGroups[freeEntityKind];
 			const collidedEntities = this.entityGroups[collidedEntityKind];
+			if (!freeEntities || !collidedEntities) {
+				return;
+			}
 			for (let i = 0; i < freeEntities.length; i++) {
 				const freeEntity = freeEntities[i];
 				if (freeEntity.isMarked || !freeEntity.isAlive) {

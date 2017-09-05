@@ -4,29 +4,33 @@ import Entity, { EntityKind } from "../entity";
 import World from "../world";
 import PhysicsBody, { Polygon } from "../physicsbody";
 
+const SCALER = 1;
+const WALL_WIDTH = 10;
+
 abstract class MapComponent {
     baseConnector: Connector;
     connectors: Connector[];
     entities: Entity[];
     walls: Wall[];
     isMaterialized: boolean;
-    abstract materialize(connectTo: Connector): void;
-    abstract createWalls(): void;
+    protected abstract materialize(connectTo: Connector): void;
+    protected abstract createWalls(): void;
 
     connectTo(connectTo: Connector) {
         this.materialize(connectTo);
-        if (!this.baseConnector){
+        if (!this.baseConnector) {
             throw Error("This element cannot be connected. Please define the baseConnector");
         }
         connectTo.link = this.baseConnector;
         this.baseConnector.link = connectTo;
         this.isMaterialized = true;
+        this.createWalls();
         this.moveToPlace();
     }
 
     private moveToPlace() {
         const connectedBase = this.baseConnector.link;
-        if (!connectedBase){
+        if (!connectedBase) {
             return;
         }
         const rotation = connectedBase.rotation;
@@ -34,7 +38,12 @@ abstract class MapComponent {
 
         this.entities.forEach(entity => {
             entity.body.rotate(rotation);
-            entity.body.center.doAdd(connectedBaseLocation);
+            entity.body.center.doRotate(-rotation).doAdd(connectedBaseLocation);
+        });
+
+        this.walls.forEach(wall => {
+            wall.body.rotate(rotation);
+            wall.body.center.doRotate(-rotation).doAdd(connectedBaseLocation);
         });
 
         this.connectors.forEach(connector => {
@@ -46,7 +55,7 @@ abstract class MapComponent {
         this.baseConnector.rotation = connectedBase.rotation;
     }
 
-    constructor(){
+    constructor() {
         this.connectors = [];
         this.entities = [];
         this.walls = [];
@@ -59,18 +68,20 @@ export class Connector {
         public location: Vector2d,
         public rotation: number,
         public openingWidth: number,
-        public link: Connector | null = null){}
+        public link: Connector | null = null) { }
 }
 
 export class SpawnPoint extends MapComponent {
+    static SIZE = 60 * SCALER;
+
     materialize(connectTo: Connector): void {
-        const base = new Floor(new Vector2d(0, 0), 60, 60, 0);
+        const base = new Floor(new Vector2d(0, 0), SpawnPoint.SIZE, SpawnPoint.SIZE, 0);
         this.entities.push(base);
         this.baseConnector = new Connector(
-            new Vector2d(0, 30), 0, 0
+            new Vector2d(0, SpawnPoint.SIZE / 2), 0, 0
         );
         this.connectors.push(
-            new Connector(new Vector2d(0, -30), 0, 60)
+            new Connector(new Vector2d(0, -SpawnPoint.SIZE / 2), 0, SpawnPoint.SIZE)
         );
     }
 
@@ -80,37 +91,94 @@ export class SpawnPoint extends MapComponent {
 }
 
 export class Walkway extends MapComponent {
+    public readonly length: number;
+    public readonly width: number;
+
+    constructor(length: number, width: number) {
+        super();
+        this.length = length * SCALER;
+        this.width = width * SCALER;
+    }
+
     materialize(connectTo: Connector): void {
-        const base = new Floor(new Vector2d(0, 0), 90, 150, 0, "#ccffee");
+        const base = new Floor(new Vector2d(0, 0), this.width, this.length, 0, "#ccffee");
         this.entities.push(base);
+        this.entities.push(new Floor(new Vector2d(0 + 30, 0), 5, 5, Math.PI / 4, "#000000"));
         this.baseConnector = new Connector(
-            new Vector2d(0, 75), 0, 60
+            new Vector2d(0, this.length / 2), 0, this.width
         );
         this.connectors.push(
-            new Connector(new Vector2d(0, -75), 0, 60),
-            new Connector(new Vector2d(-45, -60), Math.PI/2, 60),
-            new Connector(new Vector2d(45, -60), -Math.PI/2, 60)
+            new Connector(new Vector2d(0, -this.length / 2), 0, this.width),
+        );
+    }
+
+    createWalls(): void {
+        this.walls.push(
+            new Wall(new Vector2d(-this.width / 2, 0), WALL_WIDTH, this.length, 0),
+            new Wall(new Vector2d(this.width / 2, 0), WALL_WIDTH, this.length, 0)
+        )
+    }
+}
+
+export class Splitter extends MapComponent {
+    public readonly size: number;
+    private halfSize: number;
+
+    constructor(size: number) {
+        super();
+        this.size = size * SCALER;
+        this.halfSize = this.size / 2;
+    }
+
+    materialize(connectTo: Connector): void {
+        const base = new Floor(new Vector2d(0, 0), this.size, this.size, 0, "#fcffae");
+        this.entities.push(base);
+        this.baseConnector = new Connector(
+            new Vector2d(0, this.halfSize), 0, this.halfSize
+        );
+        this.connectors.push(
+            new Connector(new Vector2d(0, -this.halfSize), 0, this.halfSize),
+            new Connector(new Vector2d(-this.halfSize, 0), Math.PI / 2, this.halfSize),
+            new Connector(new Vector2d(this.halfSize, 0), -Math.PI / 2, this.halfSize)
         );
     }
 
     createWalls(): void {
 
     }
-
 }
 
 export class EndPoint extends MapComponent {
+    static SIZE = 60 * SCALER;
+
     materialize(connectTo: Connector): void {
-        const base = new Floor(new Vector2d(0, 0), 60, 60, 0, "#ffeeee");
+        const base = new Floor(new Vector2d(0, 0), EndPoint.SIZE, EndPoint.SIZE, 0, "#ffeeee");
         this.entities.push(base);
         this.baseConnector = new Connector(
-            new Vector2d(0, 30), 0, 60
+            new Vector2d(0, EndPoint.SIZE / 2), 0, EndPoint.SIZE
         );
     }
+
     createWalls(): void {
 
     }
+}
 
+export class Closer extends MapComponent {
+    public readonly width: number;
+
+    constructor(width: number) {
+        super();
+        this.width = width * SCALER;
+    }
+
+    materialize(connectTo: Connector): void {
+        this.baseConnector = new Connector(new Vector2d(0, 0), 0, 0);
+    }
+
+    createWalls(): void {
+        this.walls.push(new Wall(new Vector2d(0, 0), this.width, WALL_WIDTH, 0));
+    }
 }
 
 export class Wall extends Entity {
@@ -133,7 +201,7 @@ export class Wall extends Entity {
         ctx.translate(l + w / 2, t + h / 2);
         ctx.rotate(this.body.rotation);
         ctx.fillStyle = Wall.WALL_COLOR;
-        ctx.fillRect(-w / 2, -h / 2, w, h);
+        ctx.fillRect(-w / 2 - 1, -h / 2 - 1, w + 1, h + 1);
         ctx.restore();
 
         this.body.getAABB().debugDraw(ctx);
@@ -164,7 +232,7 @@ export class Floor extends Entity {
         ctx.translate(l + w / 2, t + h / 2);
         ctx.rotate(this.body.rotation);
         ctx.fillStyle = this.color;
-        ctx.fillRect(-w / 2, -h / 2, w, h);
+        ctx.fillRect(-w / 2 - 1, -h / 2 - 1, w + 1, h + 1);
         ctx.restore();
     }
 }
