@@ -8,16 +8,17 @@ import { Color } from "./utils";
 export class Player extends Entity {
 	color: Color;
 	restitution: number;
+	hasControl: boolean = true;
 	static PLAYER_SPEED_FACTOR = 0.001;
 
-	constructor(world: World, center: Vector2d, size: number, color: Color) {
-		super(EntityKind.PLAYER, world);
+	constructor(center: Vector2d, size: number, color: Color) {
+		super(EntityKind.PLAYER);
 		this.color = color;
 		this.body = new PhysicsBody(center, new Vector2d(size / 2, size / 2));
 		this.restitution = .3;
 	}
 
-	draw(ctx: CanvasRenderingContext2D, world: World, time: number) {
+	draw(ctx: CanvasRenderingContext2D, time: number) {
 		const ltwh = this.body.getLTWH();
 		const l = ltwh[0], t = ltwh[1], w = ltwh[2], h = ltwh[3];
 		ctx.save();
@@ -33,7 +34,7 @@ export class Player extends Entity {
 		this.body.asPolygon().debugDraw(ctx);
 	}
 
-	onAnimate(world: World, time: number) {
+	onAnimate(time: number) {
 		if (this.body.speed.getMagnitude() !== 0) {
 			this.body.rotation = this.body.speed.toRotation();
 		}
@@ -44,14 +45,19 @@ export class Player extends Entity {
 
 	collideAction(otherEntity: Entity, time: number) {
 		this.color = new Color("#de8228");
-		setTimeout(() => { this.color = new Color("#39fa93") }, 100);
+		setTimeout(() => { this.color = new Color("#39fa93"); this.hasControl = true; }, 300);
 
 		if (otherEntity.kind === EntityKind.WALL) {
-			// const wallNormal = otherEntity.body.asPolygon().getNormalAt(this.body.center).normalize();
-			// this.body.speed.doAdd(wallNormal);
 			const wallSideVector = otherEntity.body.asPolygon().getSideVectorAt(this.body.center).normalize();
 			const projectedSpeedVector = wallSideVector.multiply(this.body.speed.dotProduct(wallSideVector));
 			this.body.speed.set(projectedSpeedVector.add(wallSideVector.getNormal().doMultiply(Player.PLAYER_SPEED_FACTOR * time)));
+			this.hasControl = false;
+		}
+	}
+
+	move(direction: Vector2d) {
+		if (this.hasControl) {
+			this.body.applyAcceleration(direction.multiply(Player.PLAYER_SPEED_FACTOR));
 		}
 	}
 }

@@ -11,14 +11,16 @@ export class Civilian extends Entity {
 
 	moveSpeedFactor: number = Math.random() * 0.001;
 
-	constructor(world: World, center: Vector2d, size: number, color: Color) {
-		super(EntityKind.PLAYER, world);
+	moveDirection: Vector2d = new Vector2d(0, 1);
+
+	constructor(center: Vector2d, size: number, color: Color) {
+		super(EntityKind.CIVILIAN);
 		this.color = color;
 		this.body = new PhysicsBody(center, new Vector2d(size / 2, size / 2));
 		this.restitution = .3;
 	}
 
-	draw(ctx: CanvasRenderingContext2D, world: World, time: number) {
+	draw(ctx: CanvasRenderingContext2D, time: number) {
 		const ltwh = this.body.getLTWH();
 		const l = ltwh[0], t = ltwh[1], w = ltwh[2] * 1.3, h = ltwh[3];
 		ctx.save();
@@ -31,11 +33,20 @@ export class Civilian extends Entity {
 		ctx.restore();
 	}
 
-	onAnimate(world: World, time: number) {
+	onAnimate( time: number) {
 		if (this.body.speed.getMagnitude() !== 0) {
 			this.body.rotation = this.body.speed.toRotation();
 		}
-		this.body.applyAcceleration(new Vector2d(0, this.moveSpeedFactor), time);
+		this.body.applyAcceleration(this.moveDirection.normalize(this.moveSpeedFactor), time);
+	}
+
+	collideAction(otherEntity: Entity, time: number){
+		if (otherEntity.kind === EntityKind.WALL) {
+			const wallSideVector = otherEntity.body.asPolygon().getSideVectorAt(this.body.center).normalize();
+			const projectedSpeedVector = wallSideVector.multiply(this.body.speed.dotProduct(wallSideVector));
+			this.body.speed.set(projectedSpeedVector.add(wallSideVector.getNormal().doMultiply(this.moveSpeedFactor * time * 2)));
+			this.moveDirection = wallSideVector;
+		}
 	}
 
 	onRemove(): void {

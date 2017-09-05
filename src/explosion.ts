@@ -45,7 +45,7 @@ export class Explosion {
 		};
 	}
 
-	fire(xy: Vector2d, world: World): Entity[] {
+	fire(xy: Vector2d): Entity[] {
 		// let params = this.params;
 		// let kind = pm.particleType.kind;
 		let particles: Entity[] = [];
@@ -65,7 +65,6 @@ export class Explosion {
 			// 		pm.shrink);
 			// } else {
 			let particle: Particle = new particleTypeConstructor(
-				world,
 				xy.copy(),
 				this.params.size.getRandom(),
 				pickRandom(this.params.colors),
@@ -75,7 +74,7 @@ export class Explosion {
 			particles.push(particle);
 			particle.body.speed.set(Vector2d.random(this.params.strength).doAdd(this.params.offset || new Vector2d()));
 			particle.gravityFactor = this.params.gravityFactor.getRandom();
-			world.addEntity(particle);
+			// world.addEntity(particle);
 		}
 		return particles;
 	}

@@ -4,14 +4,14 @@ import { Emitter } from "./emitters";
 import PhysicsBody from "./physicsbody";
 
 export interface Animatable {
-	animate(world: World, time: number): void;
+	animate(time: number): void;
 	life: number;
 	isAlive: boolean;
 	resources: Animatable[];
 }
 
 export interface Drawable {
-	draw(ctx: CanvasRenderingContext2D, world: World, time: number): void;
+	draw(ctx: CanvasRenderingContext2D, time: number): void;
 	isVisible: boolean;
 }
 
@@ -22,7 +22,7 @@ export abstract class AnimatableDefault implements Animatable {
 	body: PhysicsBody;
 	isMarked: boolean;
 
-	abstract onAnimate(world: World, time: number): void;
+	abstract onAnimate(time: number): void;
 	abstract onRemove(): void;
 
 	constructor() {
@@ -31,15 +31,15 @@ export abstract class AnimatableDefault implements Animatable {
 		this.isMarked = false;
 	}
 
-	animate(world: World, time: number) {
+	animate(time: number) {
 		if (!this.isAlive) return;
 		if (this.body) {
 			this.body.tick(time);
 		}
-		this.onAnimate(world, time);
+		this.onAnimate(time);
 		if (this.resources) {
 			this.resources.forEach((e: Emitter) => {
-				e.animate(world, time);
+				e.animate(time);
 			});
 		}
 		this.life -= time;
@@ -62,18 +62,16 @@ export default abstract class Entity extends AnimatableDefault implements Drawab
 	maxLife: number;
 	kind: EntityKind;
 	isVisible: boolean;
-	protected world: World;
 
-	constructor(kind: EntityKind, world: World) {
+	constructor(kind: EntityKind) {
 		super();
 		this.resources = [];
-		this.world = world;
 		this.kind = kind;
 		this.isVisible = true;
 		this.life = this.maxLife = Infinity;
 	}
 
-	draw(ctx: CanvasRenderingContext2D, world: World, time: number) {
+	draw(ctx: CanvasRenderingContext2D, time: number) {
 	}
 
 	collideAction(otherEntity: Entity, time: number) {
@@ -96,6 +94,8 @@ export enum EntityKind {
 
 	// ETC
 	SPRITE,
+	FLOOR,
 	WALL,
+	CIVILIAN,
 	PLAYER
 }

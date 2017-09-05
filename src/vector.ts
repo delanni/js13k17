@@ -90,7 +90,7 @@ export default class Vector2d {
 		return new Vector2d(this.y, -this.x);
 	}
 
-	rotate(tetha: number) {
+	rotate(tetha: number): Vector2d {
 		const rotationMatrix = new Matrix2(
 			Math.cos(tetha), Math.sin(tetha),
 			-Math.sin(tetha), Math.cos(tetha)
@@ -98,8 +98,19 @@ export default class Vector2d {
 		return this.multiplyMatrix(rotationMatrix);
 	}
 
+	doRotate(tetha: number): Vector2d {
+		const rotated = this.rotate(tetha);
+		this.set(rotated);
+		return this;
+	}
+
 	dotProduct(otherVector: Vector2d): number {
 		return this.x * otherVector.x + this.y * otherVector.y;
+	}
+
+	debugDraw(context: CanvasRenderingContext2D, color: string, size: number = 2) {
+		context.fillStyle = color;
+		context.fillRect(this.x, this.y, size, size);
 	}
 }
 

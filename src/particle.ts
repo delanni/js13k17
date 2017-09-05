@@ -11,8 +11,8 @@ export class Particle extends Entity {
 	gravityFactor: number;
 	restitution: number;
 
-	constructor(world: World, center: Vector2d, size: number, color: Color, life: number, shrink: number) {
-		super(EntityKind.PARTICLE, world);
+	constructor(center: Vector2d, size: number, color: Color, life: number, shrink: number) {
+		super(EntityKind.PARTICLE);
 		this.color = color;
 		this.body = new PhysicsBody(center, new Vector2d(size / 2, size / 2));
 		this.life = this.maxLife = life || 300;
@@ -21,7 +21,7 @@ export class Particle extends Entity {
 		this.shrinkage = (shrink ? (size / 2) / this.life : 0) * shrink;
 	} 
 
-	draw(ctx: CanvasRenderingContext2D, world: World, time: number) {
+	draw(ctx: CanvasRenderingContext2D, time: number) {
 		let ltwh = this.body.getLTWH(), l = ltwh[0], t = ltwh[1], w = ltwh[2], h = ltwh[3];
 		ctx.save();
 		ctx.translate(l + w / 2, t + h / 2);
@@ -31,7 +31,7 @@ export class Particle extends Entity {
 		ctx.restore();
 	}
 
-	onAnimate(world: World, time: number) {
+	onAnimate(time: number) {
 		this.body.corner.doSubtract(new Vector2d(this.shrinkage * time, this.shrinkage * time));
 	}
 
