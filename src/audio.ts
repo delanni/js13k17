@@ -1,34 +1,47 @@
-	// function ArcadeAudio() {
-	// 	this.sounds = {};
-	// }
+// import EventBus, { GameEventKind } from "./eventbus";
 
-	// ArcadeAudio.prototype.add = function(key, count, settings) {
-	// 	this.sounds[key] = [];
-	// 	settings.forEach(function(elem, index) {
-	// 		this.sounds[key].push({
-	// 			tick: 0,
-	// 			count: count,
-	// 			pool: []
-	// 		});
-	// 		for (var i = 0; i < count; i++) {
-	// 			var audio = new Audio();
-	// 			// audio.src = jsfxr(elem);
-	// 			this.sounds[key][index].pool.push(audio);
-	// 		}
-	// 	}, this);
-	// };
+// export class ArcadeAudio {
+// 	sounds: { [key: string]: any } = {};
+// 	isMuted: boolean = false;
 
-	// ArcadeAudio.prototype.play = function(key) {
-	// 	if (!window.mute) {
-	// 		var sound = this.sounds[key];
-	// 		var soundData = sound.length > 1 ? sound[Math.floor(Math.random() * sound.length)] : sound[0];
-	// 		soundData.pool[soundData.tick].play();
-	// 		soundData.tick < soundData.count - 1 ? soundData.tick++ : soundData.tick = 0;
-	// 	}
-	// };
+// 	constructor() {
+// 		this.add('coin', 5, [
+// 			[0, , 0.0116, 0.3061, 0.432, 0.4097, , , , , , 0.5982, 0.6732, , , , , , 1, , , , , 0.5]
+// 		]);
+// 	}
 
-	// var aa = new ArcadeAudio();
+// 	add(key: string, count: number, settings: any[]) {
+// 		this.sounds[key] = [];
+// 		settings.forEach((elem, index: number) => {
+// 			this.sounds[key].push({
+// 				tick: 0,
+// 				count: count,
+// 				pool: []
+// 			});
+// 			for (var i = 0; i < count; i++) {
+// 				var audio = new Audio();
+// 				this.sounds[key][index].pool.push(audio);
+// 			}
+// 		}, this);
+// 	}
 
-	// aa.add('coin', 5, [
-	// 	[0, , 0.0116, 0.3061, 0.432, 0.4097, , , , , , 0.5982, 0.6732, , , , , , 1, , , , , 0.5]
-	// ]);
+// 	play(key: string) {
+// 		if (!this.isMuted) {
+// 			const sound = this.sounds[key];
+// 			const soundData = sound.length > 1 ? sound[Math.floor(Math.random() * sound.length)] : sound[0];
+// 			soundData.pool[soundData.tick].play();
+
+// 			if (soundData.tick < soundData.count - 1) {
+// 				soundData.tick++
+// 			} else {
+// 				soundData.tick = 0;
+// 			}
+// 		}
+// 	}
+
+// 	hookUp() {
+// 		EventBus.instance.subscribeAll(GameEventKind.GAME_WON, () => {
+// 			this.play("coin");
+// 		});
+// 	}
+// }

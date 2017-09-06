@@ -90,12 +90,13 @@ export default class EventBus {
 
         if (continueOn.length) {
             const nextEvent = continueOn[0];
-            setTimeout(()=>this.replayEvent(nextEvent, continueOn.slice(1)), nextEvent.timestamp - event.timestamp)
+            setTimeout(() => this.replayEvent(nextEvent, continueOn.slice(1)), nextEvent.timestamp - event.timestamp)
         }
     }
 }
 
 export type GameEvent =
+    GGameFinished |
     GPlayerCollision |
     GKeyboardEvent |
     GMouseEvent;
@@ -120,9 +121,16 @@ export class GPlayerCollision {
     entity: Entity;
 }
 
+export class GGameFinished {
+    timestamp: number;
+    kind: GameEventKind.GAME_LOST | GameEventKind.GAME_WON;
+}
+
 export enum GameEventKind {
     MOUSE,
     KEYBOARD,
     PLAYER_COLLISION_ENTER,
-    PLAYER_COLLISION_LEAVE
+    PLAYER_COLLISION_LEAVE,
+    GAME_WON,
+    GAME_LOST
 }

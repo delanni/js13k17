@@ -28,7 +28,7 @@ module.exports = {
       ]
     },
     plugins: [
-      uglifyMinify,
+      // uglifyMinify,
       shellPlugin
     ],
      // Enable sourcemaps for debugging webpack's output.

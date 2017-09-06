@@ -1,125 +1,63 @@
-
-import Entity, { Animatable, Drawable, AnimatableDefault, EntityKind } from "../entity";
-import World from "../world";
-import PhysicsBody from "../physicsbody";
+import { Closer, Connector, EndPoint, SpawnPoint, MapComponent, MapComponentKind, Walkway, Splitter } from "./components";
 import Vector2d from "../vector";
-import { Graph, Node } from "../graph";
 
-export class GameMap extends AnimatableDefault implements Drawable {
-    segments: GameMapSegment[];
-    isVisible: boolean;
-
-    draw(ctx: CanvasRenderingContext2D, time: number): void {
-        if (this.isVisible) {
-            this.segments.forEach(segment => {
-                segment.draw(ctx, time);
-            });
-        }
-    }
-
-    onAnimate(time: number): void {
-
-    }
-
-    onRemove(): void {
-
-    }
-
-}
-
-export class GameMapSegment extends AnimatableDefault implements Drawable {
-    isVisible: boolean;
-    elements: Entity[];
-    kind: PointOfInterestKind;
-
-    constructor(kind: PointOfInterestKind) {
-        super();
-        this.kind = kind;
-        this.elements = [];
-    }
-
-    draw(ctx: CanvasRenderingContext2D, time: number): void {
-        if (this.isVisible) {
-            this.elements.forEach(element => {
-                element.draw(ctx, time);
-            });
-        }
-    }
-
-    onAnimate(time: number): void {
-
-    }
-
-    onRemove(): void {
-
-    }
+export interface GameMap {
+    spawn: MapComponent;
+    end: MapComponent;
+    components: MapComponent[];
 }
 
 export class MapGenerator {
     constructor() {
-
     }
 
-    generate(): Graph<PointOfInterestKind> {
-        const g = new Graph<PointOfInterestKind>();
+    generateMap(center: Vector2d, difficulty: number): GameMap {
+        const spawn = this.makeFoundations(center);
+        const mainPath = this.generateMainPath(spawn);
+        const finalMap = this.decorateAndFinish(mainPath);
 
-        const spawn = g.createNode(PointOfInterestKind.SPAWN);
-        const end = g.createNode(PointOfInterestKind.END, spawn);
-
-        return g;
-    }
-}
-
-export class MapBuilder {
-    constructor() {
-
+        return {
+            spawn: spawn,
+            end: finalMap.filter(x => x.kind === MapComponentKind.ENDPOINT)[0],
+            components: finalMap
+        };
     }
 
-    buildMap(graph: Graph<PointOfInterestKind>) {
-        let currentNode = graph.nodes[0];
+    makeFoundations(center: Vector2d): MapComponent {
+        const base = new Connector(center.copy(), 0, 0, null);
+        const spawn = new SpawnPoint(30);
+        spawn.connectTo(base);
 
-        let currentSegment = this.materialize(currentNode.value);
-
-        let connectedSegments: GameMapSegment[] = this.expressConnectedNodes(currentNode);
-
-        return [currentSegment, ...connectedSegments];
+        return spawn;
     }
 
-    materialize(kind: PointOfInterestKind): GameMapSegment {
-        switch(kind){
-            case PointOfInterestKind.SPAWN:
-                return new GameMapSegment(PointOfInterestKind.SPAWN);
-            case PointOfInterestKind.END:
-                return new GameMapSegment(PointOfInterestKind.END);  
-            default:
-                return new GameMapSegment(PointOfInterestKind.BRANCH);
-        }
+    generateMainPath(spawn: MapComponent): MapComponent[] {
+        const walkway = new Walkway(200, 90);
+        walkway.connectTo(spawn.connectors[0]);
+
+        const splitter = new Splitter(100);
+        splitter.connectTo(walkway.connectors[0]);
+
+        const walkway2 = new Walkway(100, 30);
+        walkway2.connectTo(splitter.connectors[2]);
+
+        const end = new EndPoint(30);
+        end.connectTo(walkway2.connectors[0]);
+
+        return [walkway, splitter, walkway2, end];
     }
 
-    expressConnectedNodes(parentNode: Node<PointOfInterestKind>): GameMapSegment[] {
-        const childSegments = parentNode.edges.map(edge => {
-            const childNode = edge.toNode;
-            if (childNode === parentNode) return [];
+    decorateAndFinish(mainPath: MapComponent[]): MapComponent[] {
+        const closers = mainPath.reduce((closers: Closer[], nextComponent: MapComponent) => {
+            const unclosedConnectors = nextComponent.connectors.filter(x => !x.link);
+            const nextClosers = unclosedConnectors.map(connector => {
+                const c = new Closer();
+                c.connectTo(connector);
+                return c;
+            });
+            return closers.concat(nextClosers);
+        }, []);
 
-            const childSegment = this.materialize(childNode.value);
-            const connector = this.makeConnector(parentNode, childNode);
-            const connectedNodes = this.expressConnectedNodes(childNode);
-
-            return [connector, childSegment, ...connectedNodes];
-        });
-
-        return childSegments.reduce((a, n) => a.concat(n), []);
-    }
-
-    makeConnector(parentNode: Node<PointOfInterestKind>, childNode: Node<PointOfInterestKind>): GameMapSegment {
-        return new GameMapSegment(PointOfInterestKind.CONNECTOR);
+        return [...mainPath, ...closers];
     }
 }
-
-export enum PointOfInterestKind {
-    SPAWN,
-    CONNECTOR,
-    END,
-    BRANCH
-}
-

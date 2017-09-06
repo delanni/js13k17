@@ -5,14 +5,15 @@ import { Camera } from "./camera";
 import { EntityKind } from "./entity";
 import { IntersectionCheckKind } from "./physicsbody";
 import Vector2d from "./vector";
-import { Connector, SpawnPoint, Walkway, Splitter, Closer, EndPoint } from "./map/components";
+import { Connector, SpawnPoint, Walkway, Splitter, Closer, EndPoint, MapComponent } from "./map/components";
 import { Player } from "./player";
 import { Civilian } from "./civilian";
 import { Color, arrayOf } from "./utils";
 import EventBus, { GameEventKind, GPlayerCollision } from "./eventbus";
+import { MapGenerator } from "./map/gamemap";
 
 export default class GameLogic {
-    spawnPoint: SpawnPoint;
+    spawnPoint: MapComponent;
     player: Player;
     civilians: any;
     camera: Camera;
@@ -66,39 +67,16 @@ export default class GameLogic {
     }
 
     createMap() {
-        const x = new Connector(
-            new Vector2d(0, 0),
-            0,
-            0,
-            null
-        );
+        const mapGenerator = new MapGenerator();
 
-        const spawn = new SpawnPoint();
-        spawn.connectTo(x);
-        this.spawnPoint = spawn;
-        this.world.addEntities(spawn.entities);
+        const map = mapGenerator.generateMap(new Vector2d(0, 0), 29);
 
-        const walkway = new Walkway(200, 90);
-        walkway.connectTo(spawn.connectors[0]);
-
-        const splitter = new Splitter(100);
-        splitter.connectTo(walkway.connectors[0]);
-
-        const closer1 = new Closer();
-        closer1.connectTo(splitter.connectors[0]);
-
-        const closer2 = new Closer();
-        closer2.connectTo(splitter.connectors[1]);
-
-        const walkway2 = new Walkway(100, 30);
-        walkway2.connectTo(splitter.connectors[2]);
-
-        const end = new EndPoint();
-        end.connectTo(walkway2.connectors[0]);
-
-        const mapComponents = [spawn, walkway, splitter, walkway2, closer1, closer2, end];
-
-        mapComponents.forEach(c => this.world.addEntities([...c.entities, ...c.walls]));
+        this.spawnPoint = map.spawn;
+        this.world.addEntities([...this.spawnPoint.entities, ...this.spawnPoint.walls]);
+        map.components.forEach(component => {
+            this.world.addEntities(component.entities);
+            this.world.addEntities(component.walls);
+        });
     }
 
     createPlayer() {
@@ -157,9 +135,13 @@ export default class GameLogic {
     }
 
     setupGameLogic() {
-        EventBus.instance.subscribeAll(GameEventKind.PLAYER_COLLISION_ENTER, (collisionEvent: GPlayerCollision)=>{
-            if (collisionEvent.entity.kind === EntityKind.ENDPOINT){
+        EventBus.instance.subscribeAll(GameEventKind.PLAYER_COLLISION_ENTER, (collisionEvent: GPlayerCollision) => {
+            if (collisionEvent.entity.kind === EntityKind.ENDPOINT) {
                 this.player.color = new Color("#0000ff");
+                EventBus.instance.publish({
+                    timestamp: Date.now(),
+                    kind: GameEventKind.GAME_WON
+                });
             }
         });
     }
