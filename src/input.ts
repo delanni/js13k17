@@ -1,7 +1,31 @@
+import EventBus, { GKeyboardEvent, GMouseEvent, GameEventKind } from "./eventbus";
+
 export class Keyboard {
 	constructor(element?: HTMLElement | HTMLCanvasElement) {
-		(element || window).addEventListener("keydown", this.setKey.bind(this), false);
-		(element || window).addEventListener("keyup", this.unsetKey.bind(this), false);
+		(element || window).addEventListener("keydown", (keyboardEvent: KeyboardEvent) => {
+			EventBus.instance.publish({
+				timestamp: Date.now(),
+				kind: GameEventKind.KEYBOARD,
+				domEvent: keyboardEvent,
+				eventType: "keydown"
+			});
+		}, false);
+		(element || window).addEventListener("keyup", (keyboardEvent: KeyboardEvent) => {
+			EventBus.instance.publish({
+				timestamp: Date.now(),
+				kind: GameEventKind.KEYBOARD,
+				domEvent: keyboardEvent,
+				eventType: "keyup"
+			});
+		}, false);
+
+		EventBus.instance.subscribeAll(GameEventKind.KEYBOARD, (event: GKeyboardEvent) => {
+			if (event.eventType === "keydown") {
+				this.setKey(event.domEvent);
+			} else if (event.eventType === "keyup") {
+				this.unsetKey(event.domEvent);
+			}
+		});
 	}
 
 	keys: {
@@ -93,11 +117,37 @@ export class Mouse {
 		this._scaleX = element ? element.offsetWidth / element.width : 1;
 		this._scaleY = element ? element.offsetHeight / element.height : 1;
 		(element || window).addEventListener("mousemove", this.move.bind(this), false);
-		(element || window).addEventListener("mousedown", this.setKey.bind(this), false);
-		(element || window).addEventListener("mouseup", this.unsetKey.bind(this), false);
+
+		// (element || window).addEventListener("mousedown", this.setKey.bind(this), false);
+		// (element || window).addEventListener("mouseup", this.unsetKey.bind(this), false);
+		(element || window).addEventListener("mousedown", (mouseEvent: MouseEvent) => {
+			EventBus.instance.publish({
+				timestamp: Date.now(),
+				kind: GameEventKind.MOUSE,
+				domEvent: mouseEvent,
+				eventType: "mousedown"
+			})
+		}, false);
+		(element || window).addEventListener("mouseup", (mouseEvent: MouseEvent) => {
+			EventBus.instance.publish({
+				timestamp: Date.now(),
+				kind: GameEventKind.MOUSE,
+				domEvent: mouseEvent,
+				eventType: "mouseup"
+			})
+		}, false);
+
 		(element || window).oncontextmenu = function (ev: PointerEvent) {
 			return false;
 		};
+
+		EventBus.instance.subscribeAll(GameEventKind.MOUSE, (event: GMouseEvent) => {
+			if (event.eventType === "mousedown") {
+				this.setKey(event.domEvent);
+			} else if (event.eventType === "mouseup") {
+				this.unsetKey(event.domEvent);
+			}
+		});
 	}
 
 	move(event: MouseEvent) {

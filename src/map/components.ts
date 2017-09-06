@@ -4,7 +4,7 @@ import Entity, { EntityKind } from "../entity";
 import World from "../world";
 import PhysicsBody, { Polygon } from "../physicsbody";
 
-const SCALER = 1;
+const SCALER = 3;
 const WALL_WIDTH = 10;
 
 abstract class MapComponent {

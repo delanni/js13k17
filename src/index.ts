@@ -14,6 +14,7 @@ import { EntityKind } from "./entity";
 import { IntersectionCheckKind } from "./physicsbody";
 import { createGrowingGraph } from "./graph";
 import { Wall, Connector, SpawnPoint, EndPoint, Walkway, Splitter, Closer } from "./map/components";
+import EventBus from "./eventbus";
 
 let log = function (...args: any[]) {
 	document.getElementById("logholder")!.textContent = args.join(", ");
@@ -87,53 +88,71 @@ const spawn = new SpawnPoint();
 spawn.connectTo(x);
 world.addEntities(spawn.entities);
 
-const mapComponents = [spawn];
+const walkway = new Walkway(200, 90);
+walkway.connectTo(spawn.connectors[0]);
+
+const splitter = new Splitter(100);
+splitter.connectTo(walkway.connectors[0]);
+
+const walkway2 = new Walkway(100, 30);
+walkway2.connectTo(splitter.connectors[2]);
+
+const end = new EndPoint();
+end.connectTo(walkway2.connectors[0]);
+
+const mapComponents = [spawn, walkway, splitter, walkway2, end];
+
+mapComponents.forEach(c => world.addEntities([...c.entities, ...c.walls]));
+
+keyboard.on("T".charCodeAt(0), () => {
+	EventBus.instance.replay();
+});
 
 // setInterval(() => {
-keyboard.on("V".charCodeAt(0), () => {
-	const w = new Splitter(90);
-	const connection = mapComponents[mapComponents.length - 1];
-	const connectors = connection.connectors.filter(x => x.link == null);
-	if (connectors.length === 0) {
-		return;
-	} else {
-		const connector = pickRandom(connectors);
-		w.connectTo(connector);
-		mapComponents.push(w);
-		world.addEntities(w.entities);
-		world.addEntities(w.walls);
-	}
-});
+// keyboard.on("V".charCodeAt(0), () => {
+// 	const w = new Splitter(90);
+// 	const connection = mapComponents[mapComponents.length - 1];
+// 	const connectors = connection.connectors.filter(x => x.link == null);
+// 	if (connectors.length === 0) {
+// 		return;
+// 	} else {
+// 		const connector = pickRandom(connectors);
+// 		w.connectTo(connector);
+// 		mapComponents.push(w);
+// 		world.addEntities(w.entities);
+// 		world.addEntities(w.walls);
+// 	}
+// });
 
-keyboard.on("B".charCodeAt(0), () => {
-	const w = new Walkway(50, 90);
-	const connection = mapComponents[mapComponents.length - 1];
-	const connectors = connection.connectors.filter(x => x.link == null);
-	if (connectors.length === 0) {
-		return;
-	} else {
-		const connector = pickRandom(connectors);
-		w.connectTo(connector);
-		mapComponents.push(w);
-		world.addEntities(w.entities);
-		world.addEntities(w.walls);
-	}
-});
+// keyboard.on("B".charCodeAt(0), () => {
+// 	const w = new Walkway(50, 90);
+// 	const connection = mapComponents[mapComponents.length - 1];
+// 	const connectors = connection.connectors.filter(x => x.link == null);
+// 	if (connectors.length === 0) {
+// 		return;
+// 	} else {
+// 		const connector = pickRandom(connectors);
+// 		w.connectTo(connector);
+// 		mapComponents.push(w);
+// 		world.addEntities(w.entities);
+// 		world.addEntities(w.walls);
+// 	}
+// });
 
-keyboard.on("C".charCodeAt(0), () => {
-	const w = new Closer(90);
-	const connection = mapComponents[mapComponents.length - 1];
-	const connectors = connection.connectors.filter(x => x.link == null);
-	if (connectors.length === 0) {
-		return;
-	} else {
-		const connector = pickRandom(connectors);
-		w.connectTo(connector);
-		// mapComponents.push(w);
-		world.addEntities(w.entities);
-		world.addEntities(w.walls);
-	}
-});
+// keyboard.on("C".charCodeAt(0), () => {
+// 	const w = new Closer(90);
+// 	const connection = mapComponents[mapComponents.length - 1];
+// 	const connectors = connection.connectors.filter(x => x.link == null);
+// 	if (connectors.length === 0) {
+// 		return;
+// 	} else {
+// 		const connector = pickRandom(connectors);
+// 		w.connectTo(connector);
+// 		// mapComponents.push(w);
+// 		world.addEntities(w.entities);
+// 		world.addEntities(w.walls);
+// 	}
+// });
 
 
 // }, 500);
