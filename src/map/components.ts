@@ -175,7 +175,9 @@ export class EndPoint extends MapComponent {
 
     materialize(connectTo: Connector): void {
         const base = new Floor(new Vector2d(0, 0), EndPoint.SIZE, EndPoint.SIZE, 0, "#ffeeee");
+        base.kind = EntityKind.ENDPOINT;
         this.entities.push(base);
+
         this.baseConnector = new Connector(
             new Vector2d(0, this.halfSize), 0, EndPoint.SIZE
         );

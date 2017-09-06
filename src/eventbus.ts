@@ -1,4 +1,5 @@
 import ComplexStore from "./complexstore";
+import Entity from "./entity";
 
 export type GameEventPredicate = (event: GameEvent) => boolean;
 export type GameEventCallback = (event: GameEvent) => void;
@@ -95,6 +96,7 @@ export default class EventBus {
 }
 
 export type GameEvent =
+    GPlayerCollision |
     GKeyboardEvent |
     GMouseEvent;
 
@@ -112,7 +114,15 @@ export class GMouseEvent {
     eventType: "mousedown" | "mouseup";
 }
 
+export class GPlayerCollision {
+    timestamp: number;
+    kind: GameEventKind.PLAYER_COLLISION_ENTER | GameEventKind.PLAYER_COLLISION_LEAVE;
+    entity: Entity;
+}
+
 export enum GameEventKind {
     MOUSE,
-    KEYBOARD
+    KEYBOARD,
+    PLAYER_COLLISION_ENTER,
+    PLAYER_COLLISION_LEAVE
 }

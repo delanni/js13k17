@@ -3,6 +3,7 @@ import Vector2d from './vector';
 import PhysicsBody from './physicsbody';
 import World from './world';
 import { Color } from "./utils";
+import EventBus, { GameEventKind, GPlayerCollision } from "./eventbus";
 
 
 export class Player extends Entity {
@@ -38,23 +39,40 @@ export class Player extends Entity {
 		if (this.body.speed.getMagnitude() !== 0) {
 			this.body.rotation = this.body.speed.toRotation();
 		}
+
+		const collisions = this.collectCollisionChangesAndProgress();
+		collisions.collisionEnter.forEach(x => {
+			EventBus.instance.publish({
+				kind: GameEventKind.PLAYER_COLLISION_ENTER,
+				timestamp: Date.now(),
+				entity: x
+			});
+		});
+		collisions.collisionLeave.forEach(x => {
+			EventBus.instance.publish({
+				kind: GameEventKind.PLAYER_COLLISION_LEAVE,
+				timestamp: Date.now(),
+				entity: x
+			});
+		});
 	}
 
 	onRemove(): void {
 	}
 
 	collideAction(otherEntity: Entity, time: number) {
-		this.color = new Color("#de8228");
+		this.registerCollision(otherEntity);
 
 		if (otherEntity.kind === EntityKind.WALL) {
+			this.color = new Color("#de8228");
 			const wallSideVector = otherEntity.body.asPolygon().getSideVectorAt(this.body.center).normalize();
 			const projectedSpeedVector = wallSideVector.multiply(this.body.speed.dotProduct(wallSideVector));
 			this.body.speed.set(projectedSpeedVector.add(wallSideVector.getNormal().doMultiply(Player.PLAYER_SPEED_FACTOR * time)));
 			this.hasControl = false;
-			setTimeout(() => { this.color = new Color("#39fa93"); this.hasControl = true; }, 300);			
+			setTimeout(() => { this.color = new Color("#39fa93"); this.hasControl = true; }, 300);
 		} else if (otherEntity.kind === EntityKind.CIVILIAN) {
+			this.color = new Color("#de8228");
 			const connectionVector = otherEntity.body.center.subtract(this.body.center);
-			// this.body.speed.doMultiply(0);
 			this.body.speed.doAdd(connectionVector.multiply(-0.005));
 			this.hasControl = false;
 			setTimeout(() => { this.color = new Color("#39fa93"); this.hasControl = true; }, 200);

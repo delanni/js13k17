@@ -3,6 +3,11 @@ import Vector2d from './vector';
 import { Emitter } from "./emitters";
 import PhysicsBody, { IntersectionCheckKind } from "./physicsbody";
 
+export interface CollisionDifference {
+	collisionEnter: Entity[];
+	collisionLeave: Entity[];
+}
+
 export interface Animatable {
 	animate(time: number): void;
 	life: number;
@@ -63,12 +68,17 @@ export default abstract class Entity extends AnimatableDefault implements Drawab
 	kind: EntityKind;
 	isVisible: boolean;
 
+	latestCollisions: Entity[];
+	previousCollisions: Entity[];
+
 	constructor(kind: EntityKind) {
 		super();
 		this.resources = [];
 		this.kind = kind;
 		this.isVisible = true;
 		this.life = this.maxLife = Infinity;
+		this.latestCollisions = [];
+		this.previousCollisions = [];
 	}
 
 	draw(ctx: CanvasRenderingContext2D, time: number) {
@@ -82,6 +92,23 @@ export default abstract class Entity extends AnimatableDefault implements Drawab
 	}
 
 	applyGravity(gravityVector: Vector2d, time: number) {
+	}
+
+	collectCollisionChangesAndProgress(): CollisionDifference {
+		const leavers = this.previousCollisions.filter(x => this.latestCollisions.indexOf(x) === -1);
+		const newcomers = this.latestCollisions.filter(x => this.previousCollisions.indexOf(x) === -1);
+
+		this.previousCollisions = this.latestCollisions;
+		this.latestCollisions = [];
+
+		return {
+			collisionEnter: newcomers,
+			collisionLeave: leavers
+		};
+	}
+
+	registerCollision(entity: Entity): void {
+		this.latestCollisions.push(entity);
 	}
 }
 
@@ -99,6 +126,7 @@ export enum EntityKind {
 	// ETC
 	SPRITE,
 	FLOOR,
+	ENDPOINT,
 	WALL,
 	CIVILIAN,
 	PLAYER
