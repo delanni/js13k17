@@ -100,11 +100,11 @@ export default class World {
 
 				for (let j = 0; j < collidedEntities.length; j++) {
 					const collidedEntity = collidedEntities[j];
-					if (collidedEntity.isMarked || !collidedEntity.isAlive) {
+					if (collidedEntity.isMarked || !collidedEntity.isAlive || collidedEntity == freeEntity) {
 						continue;
 					}
 
-					if (freeEntity.body.intersects(collidedEntity.body, intersectionCheckKind)) {
+					if (freeEntity.collides(collidedEntity, intersectionCheckKind)) {
 						freeEntity.collideAction(collidedEntity, time);
 						if (isMutual) {
 							collidedEntity.collideAction(freeEntity, time);

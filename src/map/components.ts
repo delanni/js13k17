@@ -225,9 +225,6 @@ export class Wall extends Entity {
         ctx.fillStyle = Wall.WALL_COLOR;
         ctx.fillRect(-w / 2 - 1, -h / 2 - 1, w + 1, h + 1);
         ctx.restore();
-
-        this.body.getAABB().debugDraw(ctx);
-        this.body.asPolygon().debugDraw(ctx);
     }
 }
 

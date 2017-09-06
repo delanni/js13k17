@@ -72,6 +72,10 @@ export default class Vector2d {
 		return this.multiply(1 / magnitude * scaling);
 	}
 
+	doNormalize(scaling: number = 1): Vector2d {
+		return this.set(this.normalize());
+	}
+
 	toRotation(): number {
 		return Math.atan2(this[1], this[0]) + Math.PI / 2;
 	}
@@ -106,6 +110,10 @@ export default class Vector2d {
 
 	dotProduct(otherVector: Vector2d): number {
 		return this.x * otherVector.x + this.y * otherVector.y;
+	}
+
+	project(otherVector: Vector2d): Vector2d {
+		return otherVector.multiply(this.dotProduct(otherVector));
 	}
 
 	debugDraw(context: CanvasRenderingContext2D, color: string, size: number = 2) {

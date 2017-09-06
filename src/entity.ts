@@ -1,7 +1,7 @@
 import World from "./world";
 import Vector2d from './vector';
 import { Emitter } from "./emitters";
-import PhysicsBody from "./physicsbody";
+import PhysicsBody, { IntersectionCheckKind } from "./physicsbody";
 
 export interface Animatable {
 	animate(time: number): void;
@@ -75,6 +75,10 @@ export default abstract class Entity extends AnimatableDefault implements Drawab
 	}
 
 	collideAction(otherEntity: Entity, time: number) {
+	}
+
+	collides(otherEntity: Entity, intersectionKind: IntersectionCheckKind): boolean {
+		return this.body.intersects(otherEntity.body, intersectionKind);
 	}
 
 	applyGravity(gravityVector: Vector2d, time: number) {
