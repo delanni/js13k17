@@ -31,11 +31,6 @@ let camera = new Camera();
 
 (<any>window)["world"] = world;
 
-const player = new Player(new Vector2d(0, 0), 10, new Color("#03ff30"));
-world.addEntity(player);
-
-const civilians: Civilian[] = arrayOf(50, (i) => new Civilian(new Vector2d(Math.random() * 640 - 320, Math.random() * 100), 10, new Color("#da92df")));
-world.addEntities(civilians);
 
 // const walls: Wall[] = arrayOf(10, i => new Wall(Vector2d.random(400), Math.random() * 20, Math.random() * 500, Math.random() * Math.PI));
 // const walls = [new Wall(world, new Vector2d(100, 100), 300, 100, 0)];
@@ -45,7 +40,45 @@ world.addEntities(civilians);
 world.addCollisionPair(EntityKind.PLAYER, EntityKind.WALL, IntersectionCheckKind.POLYGON);
 world.addCollisionPair(EntityKind.CIVILIAN, EntityKind.WALL, IntersectionCheckKind.POLYGON);
 
+const x = new Connector(
+	new Vector2d(0, 0),
+	0,
+	0,
+	null
+);
+
+const spawn = new SpawnPoint();
+spawn.connectTo(x);
+world.addEntities(spawn.entities);
+
+const walkway = new Walkway(200, 90);
+walkway.connectTo(spawn.connectors[0]);
+
+const splitter = new Splitter(100);
+splitter.connectTo(walkway.connectors[0]);
+
+const closer1 = new Closer();
+closer1.connectTo(splitter.connectors[0]);
+
+const closer2 = new Closer();
+closer2.connectTo(splitter.connectors[1]);
+
+const walkway2 = new Walkway(100, 30);
+walkway2.connectTo(splitter.connectors[2]);
+
+const end = new EndPoint();
+end.connectTo(walkway2.connectors[0]);
+
+const mapComponents = [spawn, walkway, splitter, walkway2, closer1, closer2, end];
+
+mapComponents.forEach(c => world.addEntities([...c.entities, ...c.walls]));
+
+const player = new Player(spawn.entities[0].body.center.copy(), 10, new Color("#03ff30"));
+world.addEntity(player);
 camera.target = player.body;
+
+const civilians: Civilian[] = arrayOf(50, (i) => new Civilian(spawn.entities[0].body.center.copy(), 10, Vector2d.random(), new Color("#da92df")));
+world.addEntities(civilians);
 
 gameLoop.addAnimateCallback(time => {
 	world.animate(time);
@@ -76,33 +109,6 @@ gameLoop.addRenderCallback(function (time, context) {
 		context.restore();
 	}
 });
-
-const x = new Connector(
-	new Vector2d(0, 0),
-	0,
-	0,
-	null
-);
-
-const spawn = new SpawnPoint();
-spawn.connectTo(x);
-world.addEntities(spawn.entities);
-
-const walkway = new Walkway(200, 90);
-walkway.connectTo(spawn.connectors[0]);
-
-const splitter = new Splitter(100);
-splitter.connectTo(walkway.connectors[0]);
-
-const walkway2 = new Walkway(100, 30);
-walkway2.connectTo(splitter.connectors[2]);
-
-const end = new EndPoint();
-end.connectTo(walkway2.connectors[0]);
-
-const mapComponents = [spawn, walkway, splitter, walkway2, end];
-
-mapComponents.forEach(c => world.addEntities([...c.entities, ...c.walls]));
 
 keyboard.on("T".charCodeAt(0), () => {
 	EventBus.instance.replay();
