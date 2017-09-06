@@ -25,6 +25,7 @@ abstract class MapComponent {
         this.baseConnector.link = connectTo;
         this.isMaterialized = true;
         this.createWalls();
+        this.closeOpenings();
         this.moveToPlace();
     }
 
@@ -55,6 +56,21 @@ abstract class MapComponent {
         this.baseConnector.rotation = connectedBase.rotation;
     }
 
+    protected closeOpenings(): void {
+        const link = this.baseConnector.link;
+        if (!link) {
+            return;
+        } else {
+            const halfSize = this.baseConnector.openingWidth / 2;
+            const halfOpeningSize = link.openingWidth / 2;
+            const baseConnectorY = this.baseConnector.location.y;
+            const wallCenterOffset = halfOpeningSize + (halfSize - halfOpeningSize) / 2;
+            const leftBlocker = new Wall(new Vector2d(-wallCenterOffset, baseConnectorY), halfSize - halfOpeningSize, WALL_WIDTH);
+            const rightBlocker = new Wall(new Vector2d(wallCenterOffset, baseConnectorY), halfSize - halfOpeningSize, WALL_WIDTH);
+            this.walls.push(leftBlocker, rightBlocker);
+        }
+    }
+
     constructor() {
         this.connectors = [];
         this.entities = [];
@@ -74,19 +90,24 @@ export class Connector {
 export class SpawnPoint extends MapComponent {
     static SIZE = 60 * SCALER;
 
+    halfSize = SpawnPoint.SIZE / 2;
+
     materialize(connectTo: Connector): void {
         const base = new Floor(new Vector2d(0, 0), SpawnPoint.SIZE, SpawnPoint.SIZE, 0);
         this.entities.push(base);
         this.baseConnector = new Connector(
-            new Vector2d(0, SpawnPoint.SIZE / 2), 0, 0
+            new Vector2d(0, this.halfSize), 0, SpawnPoint.SIZE
         );
         this.connectors.push(
-            new Connector(new Vector2d(0, -SpawnPoint.SIZE / 2), 0, SpawnPoint.SIZE)
+            new Connector(new Vector2d(0, -this.halfSize), 0, SpawnPoint.SIZE)
         );
     }
 
     createWalls(): void {
-
+        this.walls.push(
+            new Wall(new Vector2d(this.halfSize, 0), WALL_WIDTH, SpawnPoint.SIZE),
+            new Wall(new Vector2d(-this.halfSize, 0), WALL_WIDTH, SpawnPoint.SIZE)
+        )
     }
 }
 
@@ -116,7 +137,7 @@ export class Walkway extends MapComponent {
         this.walls.push(
             new Wall(new Vector2d(-this.width / 2, 0), WALL_WIDTH, this.length, 0),
             new Wall(new Vector2d(this.width / 2, 0), WALL_WIDTH, this.length, 0)
-        )
+        );
     }
 }
 
@@ -134,42 +155,44 @@ export class Splitter extends MapComponent {
         const base = new Floor(new Vector2d(0, 0), this.size, this.size, 0, "#fcffae");
         this.entities.push(base);
         this.baseConnector = new Connector(
-            new Vector2d(0, this.halfSize), 0, this.halfSize
+            new Vector2d(0, this.halfSize), 0, this.size
         );
         this.connectors.push(
-            new Connector(new Vector2d(0, -this.halfSize), 0, this.halfSize),
-            new Connector(new Vector2d(-this.halfSize, 0), Math.PI / 2, this.halfSize),
-            new Connector(new Vector2d(this.halfSize, 0), -Math.PI / 2, this.halfSize)
+            new Connector(new Vector2d(0, -this.halfSize), 0, this.size),
+            new Connector(new Vector2d(-this.halfSize, 0), Math.PI / 2, this.size),
+            new Connector(new Vector2d(this.halfSize, 0), -Math.PI / 2, this.size)
         );
     }
 
     createWalls(): void {
-
     }
 }
 
 export class EndPoint extends MapComponent {
     static SIZE = 60 * SCALER;
 
+    halfSize = EndPoint.SIZE / 2;
+
     materialize(connectTo: Connector): void {
         const base = new Floor(new Vector2d(0, 0), EndPoint.SIZE, EndPoint.SIZE, 0, "#ffeeee");
         this.entities.push(base);
         this.baseConnector = new Connector(
-            new Vector2d(0, EndPoint.SIZE / 2), 0, EndPoint.SIZE
+            new Vector2d(0, this.halfSize), 0, EndPoint.SIZE
         );
     }
 
     createWalls(): void {
-
+        this.walls.push(
+            new Wall(new Vector2d(this.halfSize, 0), WALL_WIDTH, EndPoint.SIZE),
+            new Wall(new Vector2d(-this.halfSize, 0), WALL_WIDTH, EndPoint.SIZE),
+            new Wall(new Vector2d(0, -this.halfSize), EndPoint.SIZE, WALL_WIDTH)
+        );
     }
 }
 
 export class Closer extends MapComponent {
-    public readonly width: number;
-
-    constructor(width: number) {
+    constructor() {
         super();
-        this.width = width * SCALER;
     }
 
     materialize(connectTo: Connector): void {
@@ -177,14 +200,13 @@ export class Closer extends MapComponent {
     }
 
     createWalls(): void {
-        this.walls.push(new Wall(new Vector2d(0, 0), this.width, WALL_WIDTH, 0));
     }
 }
 
 export class Wall extends Entity {
     static WALL_COLOR = "#398527";
 
-    constructor(center: Vector2d, width: number, height: number, rotation: number) {
+    constructor(center: Vector2d, width: number, height: number, rotation: number = 0) {
         super(EntityKind.WALL);
         this.body = new PhysicsBody(center, new Vector2d(width / 2, height / 2)).rotate(rotation);
     }

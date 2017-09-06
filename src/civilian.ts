@@ -11,13 +11,14 @@ export class Civilian extends Entity {
 
 	moveSpeedFactor: number = Math.random() * 0.001;
 
-	moveDirection: Vector2d = new Vector2d(0, 1);
+	moveDirection: Vector2d;
 
-	constructor(center: Vector2d, size: number, color: Color) {
+	constructor(center: Vector2d, size: number, moveDirection: Vector2d, color: Color) {
 		super(EntityKind.CIVILIAN);
 		this.color = color;
 		this.body = new PhysicsBody(center, new Vector2d(size / 2, size / 2));
 		this.restitution = .3;
+		this.moveDirection = moveDirection;
 	}
 
 	draw(ctx: CanvasRenderingContext2D, time: number) {
@@ -45,7 +46,7 @@ export class Civilian extends Entity {
 			const wallSideVector = otherEntity.body.asPolygon().getSideVectorAt(this.body.center).normalize();
 			const projectedSpeedVector = wallSideVector.multiply(this.body.speed.dotProduct(wallSideVector));
 			this.body.speed.set(projectedSpeedVector.add(wallSideVector.getNormal().doMultiply(this.moveSpeedFactor * time * 2)));
-			this.moveDirection = wallSideVector;
+			this.moveDirection = Vector2d.random();
 		}
 	}
 
