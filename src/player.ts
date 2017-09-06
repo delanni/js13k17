@@ -45,19 +45,25 @@ export class Player extends Entity {
 
 	collideAction(otherEntity: Entity, time: number) {
 		this.color = new Color("#de8228");
-		setTimeout(() => { this.color = new Color("#39fa93"); this.hasControl = true; }, 300);
 
 		if (otherEntity.kind === EntityKind.WALL) {
 			const wallSideVector = otherEntity.body.asPolygon().getSideVectorAt(this.body.center).normalize();
 			const projectedSpeedVector = wallSideVector.multiply(this.body.speed.dotProduct(wallSideVector));
 			this.body.speed.set(projectedSpeedVector.add(wallSideVector.getNormal().doMultiply(Player.PLAYER_SPEED_FACTOR * time)));
 			this.hasControl = false;
+			setTimeout(() => { this.color = new Color("#39fa93"); this.hasControl = true; }, 300);			
+		} else if (otherEntity.kind === EntityKind.CIVILIAN) {
+			const connectionVector = otherEntity.body.center.subtract(this.body.center);
+			// this.body.speed.doMultiply(0);
+			this.body.speed.doAdd(connectionVector.multiply(-0.005));
+			this.hasControl = false;
+			setTimeout(() => { this.color = new Color("#39fa93"); this.hasControl = true; }, 200);
 		}
 	}
 
-	move(direction: Vector2d) {
+	move(direction: Vector2d, time: number) {
 		if (this.hasControl) {
-			this.body.applyAcceleration(direction.multiply(Player.PLAYER_SPEED_FACTOR));
+			this.body.applyAcceleration(direction.normalize(Player.PLAYER_SPEED_FACTOR), time);
 		}
 	}
 }

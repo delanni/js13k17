@@ -38,7 +38,11 @@ let camera = new Camera();
 
 
 world.addCollisionPair(EntityKind.PLAYER, EntityKind.WALL, IntersectionCheckKind.POLYGON);
+world.addCollisionPair(EntityKind.PLAYER, EntityKind.CIVILIAN, IntersectionCheckKind.POLYGON, true);
 world.addCollisionPair(EntityKind.CIVILIAN, EntityKind.WALL, IntersectionCheckKind.POLYGON);
+setTimeout(()=>{
+	world.addCollisionPair(EntityKind.CIVILIAN, EntityKind.CIVILIAN, IntersectionCheckKind.ROUND);
+}, 5000);
 
 const x = new Connector(
 	new Vector2d(0, 0),
@@ -88,7 +92,7 @@ gameLoop.addAnimateCallback(time => {
 gameLoop.addAnimateCallback((n) => {
 	const direction = readDirectionFromKeyboard();
 
-	player.move(direction.normalize(n));
+	player.move(direction.normalize(), n);
 	// player.body.applyAcceleration(direction.normalize(Player.PLAYER_SPEED_FACTOR), n);
 });
 
