@@ -1,17 +1,20 @@
 
-import GameLoop from "./gameLoop";
+import GameLoop, { RenderCallback } from "./gameLoop";
 import { Mouse, Keyboard } from "./input";
 import World from './world';
 import { Lightningbolt } from './projectiles';
 import Vector2d from './vector';
 import { Particle } from "./particle";
-import { Color, arrayOf } from "./utils";
+import { Color, arrayOf, pickRandom } from "./utils";
 import { Camera } from "./camera";
 import { Player } from "./player";
 import { Civilian } from "./civilian";
-import { Wall } from "./gamemap";
+// import { GameMap, GameMapSegment, MapBuilder, MapGenerator, PointOfInterestKind, Wall } from "./gamemap";
 import { EntityKind } from "./entity";
 import { IntersectionCheckKind } from "./physicsbody";
+import { createGrowingGraph } from "./graph";
+import { Wall, Connector, SpawnPoint, EndPoint, Walkway, Splitter, Closer } from "./map/components";
+import EventBus from "./eventbus";
 
 let log = function (...args: any[]) {
 	document.getElementById("logholder")!.textContent = args.join(", ");
@@ -28,18 +31,19 @@ let camera = new Camera();
 
 (<any>window)["world"] = world;
 
-const player = new Player(world, new Vector2d(0, 0), 10, new Color("#03ff30"));
-
-const civilians: Civilian[] = arrayOf(50, (i) => new Civilian(world, new Vector2d(Math.random() * 640 - 320, Math.random() * 100), 10, new Color("#da92df")));
-
-const walls: Wall[] = arrayOf(5, i => new Wall(world, Vector2d.random(400), Math.random() * 20, Math.random() * 500, Math.random() * Math.PI));
-// const walls = [new Wall(world, new Vector2d(100, 100), 300, 100, 0)];
-
+const player = new Player(new Vector2d(0, 0), 10, new Color("#03ff30"));
 world.addEntity(player);
+
+const civilians: Civilian[] = arrayOf(50, (i) => new Civilian(new Vector2d(Math.random() * 640 - 320, Math.random() * 100), 10, new Color("#da92df")));
 world.addEntities(civilians);
-world.addEntities(walls);
+
+// const walls: Wall[] = arrayOf(10, i => new Wall(Vector2d.random(400), Math.random() * 20, Math.random() * 500, Math.random() * Math.PI));
+// const walls = [new Wall(world, new Vector2d(100, 100), 300, 100, 0)];
+// world.addEntities(walls);
+
 
 world.addCollisionPair(EntityKind.PLAYER, EntityKind.WALL, IntersectionCheckKind.POLYGON);
+world.addCollisionPair(EntityKind.CIVILIAN, EntityKind.WALL, IntersectionCheckKind.POLYGON);
 
 camera.target = player.body;
 
@@ -51,7 +55,8 @@ gameLoop.addAnimateCallback(time => {
 gameLoop.addAnimateCallback((n) => {
 	const direction = readDirectionFromKeyboard();
 
-	player.body.applyAcceleration(direction.normalize(Player.PLAYER_SPEED_FACTOR), n);
+	player.move(direction.normalize(n));
+	// player.body.applyAcceleration(direction.normalize(Player.PLAYER_SPEED_FACTOR), n);
 });
 
 gameLoop.addRenderCallback(function (time, context) {
@@ -72,27 +77,85 @@ gameLoop.addRenderCallback(function (time, context) {
 	}
 });
 
-// gameLoop.addRenderCallback((time, context) => {
-// 	var p = walls[0].body.asPolygon();
-// 	var mouseWorldPosition = new Vector2d(mouse.x, mouse.y).add(camera.body.center).subtract(camera.body.corner);
+const x = new Connector(
+	new Vector2d(0, 0),
+	0,
+	0,
+	null
+);
 
-// 	var normal = p.getNormalAt(mouseWorldPosition);
+const spawn = new SpawnPoint();
+spawn.connectTo(x);
+world.addEntities(spawn.entities);
 
-// 	context.save();
-// 	const translation = camera.getTranslation();
-// 	context.translate(translation[0], translation[1]);
+const walkway = new Walkway(200, 90);
+walkway.connectTo(spawn.connectors[0]);
 
-// 	context.fillStyle = "white";
-// 	context.fillRect(mouseWorldPosition.x, mouseWorldPosition.y, 5, 5);
+const splitter = new Splitter(100);
+splitter.connectTo(walkway.connectors[0]);
 
-// 	context.beginPath();
-// 	context.moveTo(p.getCentroid().x, p.getCentroid().y);
-// 	context.lineTo(mouseWorldPosition.x, mouseWorldPosition.y);
-// 	context.lineTo(mouseWorldPosition.x + normal.x, mouseWorldPosition.y + normal.y);
-// 	context.stroke();
+const walkway2 = new Walkway(100, 30);
+walkway2.connectTo(splitter.connectors[2]);
 
-// 	context.restore();
+const end = new EndPoint();
+end.connectTo(walkway2.connectors[0]);
+
+const mapComponents = [spawn, walkway, splitter, walkway2, end];
+
+mapComponents.forEach(c => world.addEntities([...c.entities, ...c.walls]));
+
+keyboard.on("T".charCodeAt(0), () => {
+	EventBus.instance.replay();
+});
+
+// setInterval(() => {
+// keyboard.on("V".charCodeAt(0), () => {
+// 	const w = new Splitter(90);
+// 	const connection = mapComponents[mapComponents.length - 1];
+// 	const connectors = connection.connectors.filter(x => x.link == null);
+// 	if (connectors.length === 0) {
+// 		return;
+// 	} else {
+// 		const connector = pickRandom(connectors);
+// 		w.connectTo(connector);
+// 		mapComponents.push(w);
+// 		world.addEntities(w.entities);
+// 		world.addEntities(w.walls);
+// 	}
 // });
+
+// keyboard.on("B".charCodeAt(0), () => {
+// 	const w = new Walkway(50, 90);
+// 	const connection = mapComponents[mapComponents.length - 1];
+// 	const connectors = connection.connectors.filter(x => x.link == null);
+// 	if (connectors.length === 0) {
+// 		return;
+// 	} else {
+// 		const connector = pickRandom(connectors);
+// 		w.connectTo(connector);
+// 		mapComponents.push(w);
+// 		world.addEntities(w.entities);
+// 		world.addEntities(w.walls);
+// 	}
+// });
+
+// keyboard.on("C".charCodeAt(0), () => {
+// 	const w = new Closer(90);
+// 	const connection = mapComponents[mapComponents.length - 1];
+// 	const connectors = connection.connectors.filter(x => x.link == null);
+// 	if (connectors.length === 0) {
+// 		return;
+// 	} else {
+// 		const connector = pickRandom(connectors);
+// 		w.connectTo(connector);
+// 		// mapComponents.push(w);
+// 		world.addEntities(w.entities);
+// 		world.addEntities(w.walls);
+// 	}
+// });
+
+
+// }, 500);
 
 gameLoop.start();
 

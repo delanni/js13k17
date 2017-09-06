@@ -1,7 +1,6 @@
 import Entity, { EntityKind } from './entity';
 import PhysicsBody from './physicsbody';
 import Vector2d from './vector';
-import World from './world';
 
 type SpriteSheet = any;
 type Animation = any;
@@ -12,8 +11,8 @@ class SpriteEntity extends Entity {
 	private currentAnimation: number;
 	private scale: Vector2d;
 
-	constructor(world: World, spritesheet: SpriteSheet, center: Vector2d, w: number, h: number, animations: Animation[]) {
-		super(EntityKind.SPRITE, world);
+	constructor(spritesheet: SpriteSheet, center: Vector2d, w: number, h: number, animations: Animation[]) {
+		super(EntityKind.SPRITE);
 		this.animations = [];
 		this.currentAnimation = 0;
 		this.body = new PhysicsBody(center.copy(), new Vector2d(w / 2, h / 2));
@@ -39,13 +38,13 @@ class SpriteEntity extends Entity {
 		this.currentAnimation = i;
 	}
 
-	draw(ctx: CanvasRenderingContext2D, world: World, time: number) {
+	draw(ctx: CanvasRenderingContext2D, time: number) {
 		const a = this.animations[this.currentAnimation];
 		a.drawFrame(ctx, time, this.body.center[0] - this.body.corner[0],
 			this.body.center[1] - this.body.corner[1], this.scale[0], this.scale[1]);
 	}
 
-	onAnimate(world: World, time: number): void {
+	onAnimate(time: number): void {
 		
 	}
 	

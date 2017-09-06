@@ -50,7 +50,7 @@ export default class PhysicsBody {
 		this.center.doAdd(vector);
 	}
 
-	applyAcceleration(vector: Vector2d, time: number): void {
+	applyAcceleration(vector: Vector2d, time: number = 1): void {
 		this.speed.doAdd(vector.multiply(time));
 		this.limitSpeed();
 	}

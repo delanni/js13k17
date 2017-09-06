@@ -3,16 +3,15 @@ import Vector2d from './vector';
 import PhysicsBody from './physicsbody';
 import { Color, NumberRange } from './utils';
 import { Explosion, ExplosionParameters } from './explosion';
-import World from './world';
 import { FireEmitter, Emitter, WaterEmitter, PoisonEmitter, LightningEmitter } from "./emitters";
 import { Particle } from './particle';
 
 export abstract class Projectile extends Entity {
 	color: Color;
 
-	constructor(entityKind: EntityKind, world: World, center: Vector2d, speed: Vector2d,
+	constructor(entityKind: EntityKind, center: Vector2d, speed: Vector2d,
 	            size: number | Vector2d, color: Color) {
-		super(entityKind, world);
+		super(entityKind);
 		this.life = this.maxLife = 1500;
 		if (typeof size === "number") {
 			this.body = new PhysicsBody(center.copy(), new Vector2d(size, size));
@@ -24,7 +23,7 @@ export abstract class Projectile extends Entity {
 		this.color = color;
 	}
 
-	abstract draw(ctx: CanvasRenderingContext2D, world: World, time: number): any;
+	abstract draw(ctx: CanvasRenderingContext2D, time: number): any;
 
 	abstract collideAction(otherEntity: Entity): any;
 }
@@ -32,9 +31,9 @@ export abstract class Projectile extends Entity {
 export class Fireball extends Projectile {
 	private emitter: Emitter;
 
-	constructor(center: Vector2d, world: World) {
-		super(EntityKind.PROJECTILE, world, center, new Vector2d(0.2, 0), 3, new Color("#ff2222"));
-		this.emitter = new FireEmitter(this, world);
+	constructor(center: Vector2d) {
+		super(EntityKind.PROJECTILE, center, new Vector2d(0.2, 0), 3, new Color("#ff2222"));
+		this.emitter = new FireEmitter(this);
 		this.emitter.params[0].gravityFactor = new NumberRange(-0.2, 0.1);
 		this.emitter.params[0].strength = 0.05;
 		this.emitter.params[0].count = new NumberRange(0, 1);
@@ -42,7 +41,7 @@ export class Fireball extends Projectile {
 		this.resources.push(this.emitter);
 	}
 
-	draw(ctx: CanvasRenderingContext2D, world: World, time: number) {
+	draw(ctx: CanvasRenderingContext2D, time: number) {
 		const ltwh = this.body.getLTWH(), l = ltwh[0], t = ltwh[1], w = ltwh[2];
 		ctx.save();
 		ctx.translate(l + w / 2, t + w / 2);
@@ -64,7 +63,7 @@ export class Fireball extends Projectile {
 				life: new NumberRange(0,1000)
 			};
 			const exp = new Explosion(explosionParameters);
-			exp.fire(this.body.center, this.world);
+			exp.fire(this.body.center);
 		}
 	}
 
@@ -72,7 +71,7 @@ export class Fireball extends Projectile {
 		throw Error ("To be implemented");
 	}
 
-	onAnimate(world: World, time: number): void {
+	onAnimate(time: number): void {
 	}
 }
 
@@ -80,10 +79,10 @@ export class Fireball extends Projectile {
 export class Waterbolt extends Projectile {
 	emitter: WaterEmitter;
 
-	constructor(center: Vector2d, world: World) {
-		super(EntityKind.PROJECTILE, world, center, new Vector2d(0.2, 0), 3, new Color("#2930dc"));
+	constructor(center: Vector2d) {
+		super(EntityKind.PROJECTILE, center, new Vector2d(0.2, 0), 3, new Color("#2930dc"));
 
-		this.emitter = new WaterEmitter(this, world);
+		this.emitter = new WaterEmitter(this);
 		this.emitter.params[0].count = new NumberRange(-1, 1);
 
 		this.resources.push(this.emitter);
@@ -102,11 +101,11 @@ export class Waterbolt extends Projectile {
 				life: new NumberRange(100, 1000)
 			};
 			const exp = new Explosion(explosionParameters);
-			exp.fire(this.body.center, this.world);
+			exp.fire(this.body.center);
 		}
 	}
 
-	draw(ctx: CanvasRenderingContext2D, world: World, time: number) {
+	draw(ctx: CanvasRenderingContext2D, time: number) {
 		const ltwh = this.body.getLTWH(), l = ltwh[0], t = ltwh[1], w = ltwh[2], h = ltwh[3];
 		ctx.save();
 		ctx.translate(l + w / 2, t + h / 2);
@@ -122,16 +121,16 @@ export class Waterbolt extends Projectile {
 		throw new Error("Method not implemented.");
 	}
 
-	onAnimate(world: World, time: number): void {
+	onAnimate(time: number): void {
 	}
 }
 
 export class Poisonball extends Projectile {
 	emitter: PoisonEmitter;
 
-	constructor(center: Vector2d, world: World) {
-		super(EntityKind.PROJECTILE, world, center, new Vector2d(0.2, 0), 2, new Color("#aca920"));
-		this.emitter = new PoisonEmitter(this, world);
+	constructor(center: Vector2d) {
+		super(EntityKind.PROJECTILE, center, new Vector2d(0.2, 0), 2, new Color("#aca920"));
+		this.emitter = new PoisonEmitter(this);
 		this.resources.push(this.emitter);
 	}
 
@@ -151,11 +150,11 @@ export class Poisonball extends Projectile {
 				size: new NumberRange(1,4)
 			};
 			const exp = new Explosion(explosionParameters);
-			exp.fire(this.body.center, this.world);
+			exp.fire(this.body.center);
 		}
 	}
 
-	draw(ctx: CanvasRenderingContext2D, world: World, time: number) {
+	draw(ctx: CanvasRenderingContext2D, time: number) {
 		const ltwh = this.body.getLTWH(), l = ltwh[0], t = ltwh[1], w = ltwh[2], h = ltwh[3];
 		ctx.save();
 		ctx.translate(l + w / 2, t + h / 2);
@@ -171,17 +170,17 @@ export class Poisonball extends Projectile {
 		throw new Error("Method not implemented.");
 	}
 
-	onAnimate(world: World, time: number): void {
+	onAnimate(time: number): void {
 	}
 }
 
 export class Lightningbolt extends Projectile {
 	emitter: LightningEmitter;
 
-	constructor(center: Vector2d, world: World, speed: Vector2d) {
-		super(EntityKind.PROJECTILE, world, center, speed, 2, new Color("#c90a72"));
+	constructor(center: Vector2d, speed: Vector2d) {
+		super(EntityKind.PROJECTILE, center, speed, 2, new Color("#c90a72"));
 
-		this.emitter = new LightningEmitter(this, world);
+		this.emitter = new LightningEmitter(this);
 		this.resources.push(this.emitter);
 	}
 
@@ -199,16 +198,16 @@ export class Lightningbolt extends Projectile {
 				strength: 0.3,
 				count: new NumberRange(4, 10)
 			});
-			exp.fire(this.body.center, this.world);
+			exp.fire(this.body.center);
 		}
 	}
 
-	onAnimate(world: World, time: number) {
+	onAnimate(time: number) {
 		this.body.center[1] += (Math.random() - 0.5) / 1300 * time * 155;
-		this.resources.forEach(r => r.animate(world, time));
+		this.resources.forEach(r => r.animate(time));
 	}
 
-	draw(ctx: CanvasRenderingContext2D, world: World, time: number) {
+	draw(ctx: CanvasRenderingContext2D, time: number) {
 		const ltwh = this.body.getLTWH(), l = ltwh[0], t = ltwh[1], w = ltwh[2];
 		ctx.save();
 		ctx.translate(l + w / 2, t + w / 2);

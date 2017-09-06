@@ -37,7 +37,7 @@ export default class World {
 			const entityGroup = this.entityGroups[entityGroupKey];
 			entityGroup.forEach(entity => {
 				if (entity.isVisible) {
-					entity.draw(ctx, this, time);
+					entity.draw(ctx, time);
 				}
 			});
 		});
@@ -50,7 +50,7 @@ export default class World {
 
 		this.entityGroups[EntityKind.ABSTRACT].forEach(entity => {
 			if (entity.isAlive) {
-				entity.animate(this, time);
+				entity.animate(time);
 			}
 			// entity.applyGravity(this.gravity, time);
 		});
@@ -89,6 +89,9 @@ export default class World {
 
 			const freeEntities = this.entityGroups[freeEntityKind];
 			const collidedEntities = this.entityGroups[collidedEntityKind];
+			if (!freeEntities || !collidedEntities) {
+				return;
+			}
 			for (let i = 0; i < freeEntities.length; i++) {
 				const freeEntity = freeEntities[i];
 				if (freeEntity.isMarked || !freeEntity.isAlive) {
