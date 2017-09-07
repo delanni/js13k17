@@ -32,9 +32,22 @@ export default class GameLoop {
 	private isRunning = false;
 	private boundGameLoop: FrameRequestCallback;
 
+	public stats : {
+		totalFrameTime: number;
+		renderTime: number;
+		animateTime: number;
+		fps: number[];
+	};
+
 	constructor(canvas: HTMLCanvasElement) {
 		this.canvas = canvas;
 		const ctx = canvas.getContext("2d");
+		this.stats = {
+			totalFrameTime: 0,
+			renderTime: 0,
+			animateTime: 0,
+			fps: []
+		};
 		if (ctx === null) {
 			throw new Error("Failed to retrieve canvas context.");
 		} else {
@@ -43,9 +56,6 @@ export default class GameLoop {
 			this.ctx.imageSmoothingEnabled = false;
 		}
 	}
-
-	// Mouse.init(canvas);
-	// Keyboard.init();
 
 	render(time: number) {
 		this.ctx.save();
@@ -71,8 +81,10 @@ export default class GameLoop {
 		if (this.isRunning) {
 			this.r(this.boundGameLoop);
 		}
-		this.animate(time);
-		this.render(time);
+		this.stats.animateTime = measure(()=>this.animate(time));
+		this.stats.renderTime = measure(()=>this.render(time));
+		this.stats.totalFrameTime = time;
+		this.stats.fps.push((1000 / time)|0);
 		this.lastTime = nx;
 	}
 
@@ -80,6 +92,13 @@ export default class GameLoop {
 		this.boundGameLoop = this.gameLoop.bind(this);
 		this.isRunning = true;
 		this.boundGameLoop(0);
+		const interval = setInterval(()=>{
+			if (this.isRunning){
+				console.log(this.stats);
+			} else {
+				clearInterval(interval);
+			}
+		}, 5000);
 	}
 
 	public stop() {
@@ -93,4 +112,12 @@ export default class GameLoop {
 	public addAnimateCallback(callback: AnimateCallback) {
 		this.animateListeners.push(callback);
 	}
+}
+
+const now = performance ? performance.now.bind(performance) : Date.now.bind(Date);
+
+function measure(fn: Function) {
+	const start = now();
+	fn();
+	return now()-start;
 }

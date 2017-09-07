@@ -2,9 +2,9 @@
 import Vector2d from "../vector";
 import Entity, { EntityKind } from "../entity";
 import World from "../world";
-import PhysicsBody, { Polygon } from "../physicsbody";
+import PhysicsBody, { Polygon, IntersectionCheckKind } from "../physicsbody";
 
-const SCALER = 3;
+const SCALER = 2;
 const WALL_WIDTH = 10;
 
 export enum MapComponentKind {
@@ -20,19 +20,24 @@ export abstract class MapComponent {
     connectors: Connector[];
     entities: Entity[];
     walls: Wall[];
-    isMaterialized: boolean;
+    private isMaterialized: boolean;
     kind: MapComponentKind;
-    protected abstract materialize(connectTo: Connector): void;
+    protected abstract materialize(): void;
     protected abstract createWalls(): void;
 
     connectTo(connectTo: Connector) {
-        this.materialize(connectTo);
-        if (!this.baseConnector) {
-            throw Error("This element cannot be connected. Please define the baseConnector");
+        this.materialize();
+        if (!this.isMaterialized){
+            if (!this.baseConnector) {
+                throw Error("This element cannot be connected. Please define the baseConnector");
+            } else {
+                this.baseConnector.owner = this;
+            } 
+            this.connectors.forEach(c => c.owner = this); 
+            this.isMaterialized = true;
         }
         connectTo.link = this.baseConnector;
         this.baseConnector.link = connectTo;
-        this.isMaterialized = true;
         this.createWalls();
         this.closeOpenings();
         this.moveToPlace();
@@ -80,12 +85,25 @@ export abstract class MapComponent {
         }
     }
 
+    // TODO: optimize with bounding box around the component
+    overlaps(otherComponent: MapComponent): boolean {
+        if (this.baseConnector.link && this.baseConnector.link.owner === otherComponent) return false;
+        for (let entity of this.entities) {
+            for (let otherEntity of otherComponent.entities) {
+                if (entity.collides(otherEntity, IntersectionCheckKind.POLYGON)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     constructor(kind: MapComponentKind) {
         this.connectors = [];
         this.entities = [];
         this.walls = [];
         this.isMaterialized = false;
-        this.kind = kind;
+        this.kind = kind;       
     }
 }
 
@@ -94,7 +112,8 @@ export class Connector {
         public location: Vector2d,
         public rotation: number,
         public openingWidth: number,
-        public link: Connector | null = null) { }
+        public link: Connector | null = null,
+        public owner: MapComponent | null = null) { }
 }
 
 export class SpawnPoint extends MapComponent {
@@ -107,7 +126,7 @@ export class SpawnPoint extends MapComponent {
         this.halfSize = this.size / 2;
     }
 
-    materialize(connectTo: Connector): void {
+    materialize(): void {
         const base = new Floor(new Vector2d(0, 0), this.size, this.size, 0);
         this.entities.push(base);
         this.baseConnector = new Connector(
@@ -136,7 +155,7 @@ export class Walkway extends MapComponent {
         this.width = width * SCALER;
     }
 
-    materialize(connectTo: Connector): void {
+    materialize(): void {
         const base = new Floor(new Vector2d(0, 0), this.width, this.length, 0, "#ccffee");
         this.entities.push(base);
         this.entities.push(new Floor(new Vector2d(0 + 30, 0), 5, 5, Math.PI / 4, "#000000"));
@@ -166,7 +185,7 @@ export class Splitter extends MapComponent {
         this.halfSize = this.size / 2;
     }
 
-    materialize(connectTo: Connector): void {
+    materialize(): void {
         const base = new Floor(new Vector2d(0, 0), this.size, this.size, 0, "#fcffae");
         this.entities.push(base);
         this.baseConnector = new Connector(
@@ -193,7 +212,7 @@ export class EndPoint extends MapComponent {
         this.halfSize = this.size / 2;
     }
 
-    materialize(connectTo: Connector): void {
+    materialize(): void {
         const base = new Floor(new Vector2d(0, 0), this.size, this.size, 0, "#ffeeee");
         base.kind = EntityKind.ENDPOINT;
         this.entities.push(base);
@@ -217,7 +236,7 @@ export class Closer extends MapComponent {
         super(MapComponentKind.CLOSER);
     }
 
-    materialize(connectTo: Connector): void {
+    materialize(): void {
         this.baseConnector = new Connector(new Vector2d(0, 0), 0, 0);
     }
 

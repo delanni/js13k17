@@ -1,6 +1,7 @@
 import Vector2d from './vector';
 import { default as Entity, EntityKind } from './entity';
 import { IntersectionCheckKind } from "./physicsbody";
+import { Camera } from "./camera";
 
 export default class World {
 
@@ -27,7 +28,7 @@ export default class World {
 		World.instance = this;
 	}
 
-	render(ctx: CanvasRenderingContext2D, time: number) {
+	render(ctx: CanvasRenderingContext2D, time: number, camera: Camera) {
 		Object.keys(this.entityGroups).forEach((entityGroupKey_: string) => {
 			const entityGroupKey = +entityGroupKey_;
 			if (entityGroupKey === 0) {
@@ -36,7 +37,7 @@ export default class World {
 
 			const entityGroup = this.entityGroups[entityGroupKey];
 			entityGroup.forEach(entity => {
-				if (entity.isVisible) {
+				if (entity.isVisible && entity.body.intersects(camera.body, IntersectionCheckKind.AABB)) {
 					entity.draw(ctx, time);
 				}
 			});

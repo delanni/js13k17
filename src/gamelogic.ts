@@ -5,14 +5,15 @@ import { Camera } from "./camera";
 import { EntityKind } from "./entity";
 import { IntersectionCheckKind } from "./physicsbody";
 import Vector2d from "./vector";
-import { Connector, SpawnPoint, Walkway, Splitter, Closer, EndPoint, MapComponent } from "./map/components";
+import { Connector, SpawnPoint, Walkway, Splitter, Closer, EndPoint, MapComponent, MapComponentKind } from "./map/components";
 import { Player } from "./player";
 import { Civilian } from "./civilian";
 import { Color, arrayOf } from "./utils";
 import EventBus, { GameEventKind, GPlayerCollision } from "./eventbus";
-import { MapGenerator } from "./map/gamemap";
+import { MapGenerator, GameMap } from "./map/gamemap";
 
 export default class GameLogic {
+    map: GameMap;
     spawnPoint: MapComponent;
     player: Player;
     civilians: any;
@@ -69,11 +70,11 @@ export default class GameLogic {
     createMap() {
         const mapGenerator = new MapGenerator();
 
-        const map = mapGenerator.generateMap(new Vector2d(0, 0), 29);
+        this.map = mapGenerator.generateMap(new Vector2d(0, 0), 10);
 
-        this.spawnPoint = map.spawn;
+        this.spawnPoint = this.map.spawn;
         this.world.addEntities([...this.spawnPoint.entities, ...this.spawnPoint.walls]);
-        map.components.forEach(component => {
+        this.map.components.forEach(component => {
             this.world.addEntities(component.entities);
             this.world.addEntities(component.walls);
         });
@@ -86,7 +87,10 @@ export default class GameLogic {
     }
 
     createCivilians() {
-        this.civilians = arrayOf(50, (i) => new Civilian(this.spawnPoint.entities[0].body.center.copy(), 10, Vector2d.random(), new Color("#da92df")));
+        this.civilians = this.map.components.filter(x=>x.kind === MapComponentKind.SPLITTER).map(splitter => 
+            arrayOf(20, (i) => new Civilian(splitter.entities[0].body.center.copy(), 10, Vector2d.random(), new Color("#383983")))
+        ).reduce((a,b)=>a.concat(b));
+
         this.world.addEntities(this.civilians);
     }
 
@@ -97,7 +101,7 @@ export default class GameLogic {
             const translation = this.camera.getTranslation();
             context.translate(translation[0], translation[1]);
             context.rotate(this.camera.getRotation());
-            this.world.render(context, time);
+            this.world.render(context, time, this.camera);
             context.restore();
         });
     }

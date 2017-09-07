@@ -90,3 +90,7 @@ export class Color {
 		return this.hexValue;
 	}
 }
+
+export function shuffle<T>(array: T[]): T[] {
+	return array.slice(0).sort(() => Math.random() - 0.5);
+}
