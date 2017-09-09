@@ -26,6 +26,12 @@ export default class Vector2d {
 		return this;
 	}
 
+	setXY(x: number, y: number): Vector2d {
+		this[0] = x;
+		this[1] = y;
+		return this;
+	}
+
 	add(other: Vector2d): Vector2d {
 		return new Vector2d(this[0] + other[0], this[1] + other[1]);
 	}

@@ -25,22 +25,6 @@ export function arrayOf<T>(size: number, filler: (index: number) => T): T[] {
 	return array;
 }
 
-// export function maxInrange<T>(array: T[], from:number, to:number) {
-// 	if (from >= 0 && to <= this.length && from < to) return Math.max.apply(null, this.slice(from, to));
-// 	return NaN;
-// }
-
-// Array.prototype.random = function() {
-// 	if (this.length <= 1) return this[0] || null;
-// 	return this[randBetween(0, this.length, 1)];
-// };
-//
-// Array.prototype.copy = function() {
-// 	if (this.length == 2)
-// 		return new Vector2d(this[0], this[1]);
-// 	return this.slice();
-// }
-
 export function identity(e: any) {
 	return e;
 }
@@ -93,4 +77,12 @@ export class Color {
 
 export function shuffle<T>(array: T[]): T[] {
 	return array.slice(0).sort(() => Math.random() - 0.5);
+}
+
+export function lerp(from: number, to: number, tempo: number, snap: number = 0) {
+	if (Math.abs(to - from) < snap) {
+		return to;
+	}
+	const _tempo = Math.min(tempo, 1);
+	return from * (1 - _tempo) + to * _tempo;
 }

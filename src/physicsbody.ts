@@ -2,14 +2,17 @@ import Vector2d from "./vector";
 import { clamp } from "./utils";
 
 export default class PhysicsBody {
-	private angularSpeed: number;
-	public rotation: number;
+	public acceleration: Vector2d;
+	public speed: Vector2d;
+	public angularSpeed: number;
 	public friction: number;
 
 	constructor(public readonly center: Vector2d = new Vector2d(),
 		public readonly corner: Vector2d = new Vector2d(),
-		public readonly speed: Vector2d = new Vector2d(),
-		public readonly acceleration: Vector2d = new Vector2d()) {
+		public rotation: number = 0
+	) {
+		this.speed = new Vector2d();
+		this.acceleration = new Vector2d();
 		this.rotation = 0;
 		this.angularSpeed = 0;
 		this.friction = 0.006;
@@ -73,6 +76,7 @@ export default class PhysicsBody {
 	}
 
 	intersects(other: PhysicsBody, kind: IntersectionCheckKind): boolean {
+		if (!other) return false;
 		const thisAABB = this.getAABB();
 		const otherAABB = other.getAABB();
 

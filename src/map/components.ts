@@ -1,8 +1,9 @@
 
 import Vector2d from "../vector";
-import Entity, { EntityKind } from "../entity";
+import Entity, { EntityKind, Drawable } from "../entity";
 import World from "../world";
 import PhysicsBody, { Polygon, IntersectionCheckKind } from "../physicsbody";
+import { Color } from "../utils";
 
 const SCALER = 2;
 const WALL_WIDTH = 10;
@@ -12,7 +13,8 @@ export enum MapComponentKind {
     ENDPOINT,
     HALL,
     SPLITTER,
-    CLOSER
+    CLOSER,
+    TERMINAL
 }
 
 export abstract class MapComponent {
@@ -27,13 +29,13 @@ export abstract class MapComponent {
 
     connectTo(connectTo: Connector) {
         this.materialize();
-        if (!this.isMaterialized){
+        if (!this.isMaterialized) {
             if (!this.baseConnector) {
                 throw Error("This element cannot be connected. Please define the baseConnector");
             } else {
                 this.baseConnector.owner = this;
-            } 
-            this.connectors.forEach(c => c.owner = this); 
+            }
+            this.connectors.forEach(c => c.owner = this);
             this.isMaterialized = true;
         }
         connectTo.link = this.baseConnector;
@@ -52,8 +54,10 @@ export abstract class MapComponent {
         const connectedBaseLocation = connectedBase.location.subtract(this.baseConnector.location.copy().rotate(-rotation));
 
         this.entities.forEach(entity => {
-            entity.body.rotate(rotation);
-            entity.body.center.doRotate(-rotation).doAdd(connectedBaseLocation);
+            if (entity.body) {
+                entity.body.rotate(rotation);
+                entity.body.center.doRotate(-rotation).doAdd(connectedBaseLocation);
+            }
         });
 
         this.walls.forEach(wall => {
@@ -79,8 +83,8 @@ export abstract class MapComponent {
             const halfOpeningSize = link.openingWidth / 2;
             const baseConnectorY = this.baseConnector.location.y;
             const wallCenterOffset = halfOpeningSize + (halfSize - halfOpeningSize) / 2;
-            const leftBlocker = new Wall(new Vector2d(-wallCenterOffset, baseConnectorY), halfSize - halfOpeningSize, WALL_WIDTH);
-            const rightBlocker = new Wall(new Vector2d(wallCenterOffset, baseConnectorY), halfSize - halfOpeningSize, WALL_WIDTH);
+            const leftBlocker = new Wall(new Vector2d(-wallCenterOffset, baseConnectorY), Math.abs(halfSize - halfOpeningSize) + WALL_WIDTH, WALL_WIDTH);
+            const rightBlocker = new Wall(new Vector2d(wallCenterOffset, baseConnectorY), Math.abs(halfSize - halfOpeningSize) + WALL_WIDTH, WALL_WIDTH);
             this.walls.push(leftBlocker, rightBlocker);
         }
     }
@@ -103,7 +107,7 @@ export abstract class MapComponent {
         this.entities = [];
         this.walls = [];
         this.isMaterialized = false;
-        this.kind = kind;       
+        this.kind = kind;
     }
 }
 
@@ -116,19 +120,24 @@ export class Connector {
         public owner: MapComponent | null = null) { }
 }
 
-export class SpawnPoint extends MapComponent {
+export class Terminal extends MapComponent {
     size: number;
     halfSize: number;
+    id: string;
 
-    constructor(size: number) {
-        super(MapComponentKind.SPAWN);
+    constructor(size: number, id: string) {
+        super(MapComponentKind.TERMINAL);
+        this.id = id;
         this.size = size * SCALER;
         this.halfSize = this.size / 2;
     }
 
     materialize(): void {
-        const base = new Floor(new Vector2d(0, 0), this.size, this.size, 0);
-        this.entities.push(base);
+        const base = new Floor(new Vector2d(0, 0), this.size, this.size);
+        const decal = new Decal(this.id, new Color("lightblue"), new Vector2d(0, -this.size / 4), this.size / 4, 0);
+
+        const terminalExit = new TriggerArea(new Vector2d(0, -this.size / 4), this.size / 2, this.size / 2);
+        this.entities.push(base, decal, terminalExit);
         this.baseConnector = new Connector(
             new Vector2d(0, this.halfSize), 0, this.size
         );
@@ -156,9 +165,8 @@ export class Walkway extends MapComponent {
     }
 
     materialize(): void {
-        const base = new Floor(new Vector2d(0, 0), this.width, this.length, 0, "#ccffee");
+        const base = new Floor(new Vector2d(0, 0), this.width, this.length);
         this.entities.push(base);
-        this.entities.push(new Floor(new Vector2d(0 + 30, 0), 5, 5, Math.PI / 4, "#000000"));
         this.baseConnector = new Connector(
             new Vector2d(0, this.length / 2), 0, this.width
         );
@@ -186,7 +194,7 @@ export class Splitter extends MapComponent {
     }
 
     materialize(): void {
-        const base = new Floor(new Vector2d(0, 0), this.size, this.size, 0, "#fcffae");
+        const base = new Floor(new Vector2d(0, 0), this.size, this.size);
         this.entities.push(base);
         this.baseConnector = new Connector(
             new Vector2d(0, this.halfSize), 0, this.size
@@ -199,35 +207,6 @@ export class Splitter extends MapComponent {
     }
 
     createWalls(): void {
-    }
-}
-
-export class EndPoint extends MapComponent {
-    size: number;
-    halfSize: number;
-
-    constructor(size: number) {
-        super(MapComponentKind.ENDPOINT);
-        this.size = size * SCALER;
-        this.halfSize = this.size / 2;
-    }
-
-    materialize(): void {
-        const base = new Floor(new Vector2d(0, 0), this.size, this.size, 0, "#ffeeee");
-        base.kind = EntityKind.ENDPOINT;
-        this.entities.push(base);
-
-        this.baseConnector = new Connector(
-            new Vector2d(0, this.halfSize), 0, this.size
-        );
-    }
-
-    createWalls(): void {
-        this.walls.push(
-            new Wall(new Vector2d(this.halfSize, 0), WALL_WIDTH, this.size),
-            new Wall(new Vector2d(-this.halfSize, 0), WALL_WIDTH, this.size),
-            new Wall(new Vector2d(0, -this.halfSize), this.size, WALL_WIDTH)
-        );
     }
 }
 
@@ -244,40 +223,69 @@ export class Closer extends MapComponent {
     }
 }
 
-export class Wall extends Entity {
-    static WALL_COLOR = "#398527";
 
-    constructor(center: Vector2d, width: number, height: number, rotation: number = 0) {
-        super(EntityKind.WALL);
-        this.body = new PhysicsBody(center, new Vector2d(width / 2, height / 2)).rotate(rotation);
+export class BoxEntity extends Entity {
+    constructor(
+        public kind: EntityKind,
+        public center: Vector2d,
+        public width: number,
+        public height: number,
+        public rotation: number,
+        public color: Color,
+        public overdrawWidth: number) {
+        super(kind);
+        this.body = new PhysicsBody(center, new Vector2d(width / 2, height / 2), rotation);
     }
 
     onAnimate(time: number): void {
     }
-
     onRemove(): void {
     }
 
-    draw(ctx: CanvasRenderingContext2D, time: number) {
+    draw(ctx: CanvasRenderingContext2D, time: number): void {
         let ltwh = this.body.getLTWH(), l = ltwh[0], t = ltwh[1], w = ltwh[2], h = ltwh[3];
         ctx.save();
         ctx.translate(l + w / 2, t + h / 2);
         ctx.rotate(this.body.rotation);
-        ctx.fillStyle = Wall.WALL_COLOR;
-        ctx.fillRect(-w / 2 - 1, -h / 2 - 1, w + 1, h + 1);
+        ctx.fillStyle = this.color.toString();
+        ctx.fillRect(-w / 2 - this.overdrawWidth, -h / 2 - this.overdrawWidth, w + this.overdrawWidth, h + this.overdrawWidth);
         ctx.restore();
     }
 }
 
-export class Floor extends Entity {
-    static FLOOR_COLOR = "#e9c5e7";
+export class Wall extends BoxEntity {
+    constructor(center: Vector2d, width: number, height: number, rotation: number = 0) {
+        super(EntityKind.WALL, center, width, height, rotation, new Color("#39ad3f"), 2);
+    }
+}
 
-    color: string;
+export class Floor extends BoxEntity {
+    constructor(center: Vector2d, width: number, height: number, rotation: number = 0) {
+        super(EntityKind.FLOOR, center, width, height, rotation, new Color("#dadd5f"), 2);
+    }
+}
 
-    constructor(center: Vector2d, width: number, height: number, rotation: number, color: string = Floor.FLOOR_COLOR) {
-        super(EntityKind.FLOOR);
-        this.body = new PhysicsBody(center, new Vector2d(width / 2, height / 2)).rotate(rotation);
+export class TriggerArea extends BoxEntity {
+    constructor(center: Vector2d, width: number, height: number, rotation: number = 0) {
+        super(EntityKind.TRIGGER_AREA, center, width, height, rotation, new Color("rgba(255, 255, 230, 0.4)"), 2);
+    }
+}
+
+export class Decal extends Entity {
+    color: Color;
+    textWidth: number;
+    text: string;
+    rotation: number;
+    center: Vector2d;
+    height: number;
+
+    constructor(text: string, color: Color, center: Vector2d, height: number, rotation: number) {
+        super(EntityKind.DECAL);
+        this.center = center;
         this.color = color;
+        this.height = height;
+        this.text = text;
+        this.body = new PhysicsBody(center, new Vector2d(height * this.text.length, height), rotation);
     }
 
     onAnimate(time: number): void {
@@ -286,13 +294,14 @@ export class Floor extends Entity {
     onRemove(): void {
     }
 
-    draw(ctx: CanvasRenderingContext2D, time: number) {
-        let ltwh = this.body.getLTWH(), l = ltwh[0], t = ltwh[1], w = ltwh[2], h = ltwh[3];
+    draw(ctx: CanvasRenderingContext2D, time: number): void {
         ctx.save();
-        ctx.translate(l + w / 2, t + h / 2);
+        ctx.translate(Math.floor(this.center.x), Math.floor(this.center.y));
         ctx.rotate(this.body.rotation);
-        ctx.fillStyle = this.color;
-        ctx.fillRect(-w / 2 - 1, -h / 2 - 1, w + 1, h + 1);
+        ctx.font = `${this.height}px Verdana`;
+        this.textWidth = this.textWidth || Math.floor(ctx.measureText(this.text).width);
+        ctx.fillStyle = this.color.toString();
+        ctx.fillText(this.text, -this.textWidth / 2, this.height / 2);
         ctx.restore();
     }
 }

@@ -17,7 +17,6 @@ export class Civilian extends Entity {
 
 	constructor(center: Vector2d, size: number, moveDirection: Vector2d, color: Color) {
 		super(EntityKind.CIVILIAN);
-		// this.color = color;
 		this.color = new Color("#00" + Math.floor(this.moveSpeedFactor * 1e4).toString(16) + "000");
 		this.body = new PhysicsBody(center, new Vector2d(size / 2, size / 2));
 		this.restitution = .3;

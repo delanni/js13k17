@@ -126,7 +126,8 @@ export enum EntityKind {
 	// ETC
 	SPRITE,
 	FLOOR,
-	ENDPOINT,
+	TRIGGER_AREA,
+	DECAL,
 	WALL,
 	CIVILIAN,
 	PLAYER

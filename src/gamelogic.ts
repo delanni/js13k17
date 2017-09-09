@@ -5,7 +5,7 @@ import { Camera } from "./camera";
 import { EntityKind } from "./entity";
 import { IntersectionCheckKind } from "./physicsbody";
 import Vector2d from "./vector";
-import { Connector, SpawnPoint, Walkway, Splitter, Closer, EndPoint, MapComponent, MapComponentKind } from "./map/components";
+import { Connector, Terminal, Walkway, Splitter, Closer, MapComponent, MapComponentKind } from "./map/components";
 import { Player } from "./player";
 import { Civilian } from "./civilian";
 import { Color, arrayOf } from "./utils";
@@ -56,11 +56,11 @@ export default class GameLogic {
     createWorld(canvas: HTMLCanvasElement) {
         this.world = new World();
         this.gameLoop = new GameLoop(canvas);
-        this.camera = new Camera();
+        this.camera = new Camera(canvas.width, canvas.height);
 
         this.world.addCollisionPair(EntityKind.PLAYER, EntityKind.WALL, IntersectionCheckKind.POLYGON);
         this.world.addCollisionPair(EntityKind.PLAYER, EntityKind.CIVILIAN, IntersectionCheckKind.POLYGON, true);
-        this.world.addCollisionPair(EntityKind.PLAYER, EntityKind.ENDPOINT, IntersectionCheckKind.POLYGON);
+        this.world.addCollisionPair(EntityKind.PLAYER, EntityKind.TRIGGER_AREA, IntersectionCheckKind.POLYGON);
         this.world.addCollisionPair(EntityKind.CIVILIAN, EntityKind.WALL, IntersectionCheckKind.POLYGON);
         setTimeout(() => {
             this.world.addCollisionPair(EntityKind.CIVILIAN, EntityKind.CIVILIAN, IntersectionCheckKind.ROUND);
@@ -68,9 +68,9 @@ export default class GameLogic {
     }
 
     createMap() {
-        const mapGenerator = new MapGenerator();
+        const mapGenerator = new MapGenerator(3892);
 
-        this.map = mapGenerator.generateMap(new Vector2d(0, 0), 10);
+        this.map = mapGenerator.generateMap(new Vector2d(0, 0), 3);
 
         this.spawnPoint = this.map.spawn;
         this.world.addEntities([...this.spawnPoint.entities, ...this.spawnPoint.walls]);
@@ -87,9 +87,9 @@ export default class GameLogic {
     }
 
     createCivilians() {
-        this.civilians = this.map.components.filter(x=>x.kind === MapComponentKind.SPLITTER).map(splitter => 
+        this.civilians = this.map.components.filter(x => x.kind === MapComponentKind.SPLITTER).map(splitter =>
             arrayOf(20, (i) => new Civilian(splitter.entities[0].body.center.copy(), 10, Vector2d.random(), new Color("#383983")))
-        ).reduce((a,b)=>a.concat(b));
+        ).reduce((a, b) => a.concat(b), []);
 
         this.world.addEntities(this.civilians);
     }
@@ -99,8 +99,8 @@ export default class GameLogic {
             // Render from the camera
             context.save();
             const translation = this.camera.getTranslation();
+            context.scale(this.camera.zoom, this.camera.zoom);
             context.translate(translation[0], translation[1]);
-            context.rotate(this.camera.getRotation());
             this.world.render(context, time, this.camera);
             context.restore();
         });
@@ -140,7 +140,7 @@ export default class GameLogic {
 
     setupGameLogic() {
         EventBus.instance.subscribeAll(GameEventKind.PLAYER_COLLISION_ENTER, (collisionEvent: GPlayerCollision) => {
-            if (collisionEvent.entity.kind === EntityKind.ENDPOINT) {
+            if (collisionEvent.entity.kind === EntityKind.TRIGGER_AREA) {
                 this.player.color = new Color("#0000ff");
                 EventBus.instance.publish({
                     timestamp: Date.now(),

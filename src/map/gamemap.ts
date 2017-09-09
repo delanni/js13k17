@@ -1,6 +1,8 @@
-import { Closer, Connector, EndPoint, SpawnPoint, MapComponent, MapComponentKind, Walkway, Splitter } from "./components";
+import { Closer, Connector, Terminal, MapComponent, MapComponentKind, Walkway, Splitter } from "./components";
 import Vector2d from "../vector";
 import { shuffle, randBetween, pickRandom } from "../utils";
+
+const SYMBOLS = "ABCDEF♠︎♣︎♥︎♦︎";
 
 export interface GameMap {
     spawn: MapComponent;
@@ -9,7 +11,16 @@ export interface GameMap {
 }
 
 export class MapGenerator {
-    constructor() {
+    private alphabet: string[];
+    private randomSeed: number;
+
+    constructor(seed: number) {
+        this.randomSeed = seed;
+        this.alphabet = SYMBOLS.split("").filter(x=>x.charCodeAt(0) < 60000);
+    }
+
+    getRandomSymbol(): string {
+        return this.alphabet.splice(Math.floor(Math.random() * this.alphabet.length), 1)[0] + Math.floor(Math.random() * 10);
     }
 
     generateMap(center: Vector2d, difficulty: number): GameMap {
@@ -26,7 +37,7 @@ export class MapGenerator {
 
     private makeFoundations(center: Vector2d): MapComponent {
         const base = new Connector(center.copy(), 0, 0, null);
-        const spawn = new SpawnPoint(30);
+        const spawn = new Terminal(30, this.getRandomSymbol());
         spawn.connectTo(base);
 
         return spawn;
@@ -61,7 +72,7 @@ export class MapGenerator {
                 }
             } else {
                 const splitter = new Splitter(randBetween(30, 200, true));
-                if (MapGenerator.tryConnect(splitter, nextConnector, components)){
+                if (MapGenerator.tryConnect(splitter, nextConnector, components)) {
                     components.push(splitter);
                     freeConnectors.push(...shuffle(splitter.connectors));
                     if (MapGenerator.depth(splitter) == difficulty) {
@@ -75,7 +86,7 @@ export class MapGenerator {
         }
 
         const lastConnector = freeConnectors.pop();
-        const end = new EndPoint(30);
+        const end = new Terminal(30, this.getRandomSymbol());
         end.connectTo(lastConnector!);
 
         return components.concat(end);
@@ -84,7 +95,7 @@ export class MapGenerator {
     static depth(mapComponent: MapComponent): number {
         let component: MapComponent = mapComponent;
         let depth = 0;
-        while(component.baseConnector.link && component.baseConnector.link.owner) {
+        while (component.baseConnector.link && component.baseConnector.link.owner) {
             component = component.baseConnector.link.owner;
             depth++;
         }
@@ -102,10 +113,10 @@ export class MapGenerator {
         }
     }
 
-    private static tryCloseConnector(connector: Connector) : MapComponent {
-            const closer = new Closer();
-            closer.connectTo(connector);
-            return closer;
+    private static tryCloseConnector(connector: Connector): MapComponent {
+        const closer = new Closer();
+        closer.connectTo(connector);
+        return closer;
     }
 
     private decorateAndFinish(mainPath: MapComponent[]): MapComponent[] {
